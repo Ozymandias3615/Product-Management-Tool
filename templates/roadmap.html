@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="roadmap-container">
+    <!-- Roadmap Title -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 id="roadmapTitle" class="h2">{{ roadmap_name }}</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFeatureModal">
+            Add Feature
+        </button>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3">Loading roadmap data...</p>
+    </div>
+
+    <!-- Error State -->
+    <div id="errorState" class="alert alert-danger d-none" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span id="errorMessage">An error occurred while loading the roadmap.</span>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="text-center py-5 d-none">
+        <i class="bi bi-calendar-x display-1 text-muted mb-3"></i>
+        <h3>No Features Yet</h3>
+        <p class="text-muted">Get started by adding your first feature to the roadmap.</p>
+        <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addFeatureModal">
+            Add Your First Feature
+        </button>
+    </div>
+
+    <!-- Timeline Controls -->
+    <div id="timelineControls" class="timeline-controls mb-4 d-none">
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary active" data-view="month">Month</button>
+            <button type="button" class="btn btn-outline-primary" data-view="quarter">Quarter</button>
+            <button type="button" class="btn btn-outline-primary" data-view="sprint">Sprint</button>
+            <button type="button" class="btn btn-outline-primary" data-view="release">Releases</button>
+            <button type="button" class="btn btn-outline-primary" data-view="kanban">Kanban</button>
+            <button type="button" class="btn btn-outline-primary" data-view="gantt">Gantt</button>
+        </div>
+    </div>
+
+    <!-- Timeline View -->
+    <div id="timelineView" class="timeline-view d-none">
+        <div class="timeline-header">
+            <div class="timeline-months">
+                <!-- Months or Releases will be dynamically populated -->
+            </div>
+        </div>
+        <div class="timeline-content">
+            <!-- Features will be dynamically populated -->
+        </div>
+    </div>
+
+    <!-- Kanban Board -->
+    <div id="kanban-board" class="d-none"></div>
+    <!-- Gantt Chart -->
+    <div id="ganttChart" class="d-none"></div>
+</div>
+
+<!-- Add Feature Modal -->
+<div class="modal fade" id="addFeatureModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add/Edit Feature</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="featureForm">
+                    <div class="mb-3">
+                        <label for="featureTitle" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="featureTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="featureDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="featureDescription" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="featureRelease" class="form-label">Release</label>
+                        <input type="text" class="form-control" id="featureRelease" placeholder="e.g. Q3 Release">
+                    </div>
+                    <div class="mb-3">
+                        <label for="featurePriority" class="form-label">Priority</label>
+                        <select class="form-select" id="featurePriority">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="featureStatus" class="form-label">Status</label>
+                        <select class="form-select" id="featureStatus">
+                            <option value="planned">Planned</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="featureDate" class="form-label">Release Date</label>
+                        <input type="date" class="form-control" id="featureDate" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveFeature">Save Feature</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Feature Detail Modal -->
+<div class="modal fade" id="featureDetailModal" tabindex="-1" aria-labelledby="featureDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="featureDetailModalLabel">Feature Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h5 id="detailTitle"></h5>
+                <p id="detailDescription"></p>
+                <p><strong>Priority:</strong> <span id="detailPriority"></span></p>
+                <p><strong>Status:</strong> <span id="detailStatus"></span></p>
+                <p><strong>Release Date:</strong> <span id="detailDate"></span></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="deleteFeatureBtn">Delete</button>
+                <button type="button" class="btn btn-primary" id="editFeatureBtn">Edit</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Roadmap ID for API calls
+  const ROADMAP_ID = JSON.parse('{{ roadmap_id|tojson|safe }}');
+  // Roadmap name for display
+  const ROADMAP_NAME = JSON.parse('{{ roadmap_name|tojson|safe }}');
+  console.log('Debug: ROADMAP_ID =', ROADMAP_ID);
+</script>
+<link rel="stylesheet" href="https://unpkg.com/frappe-gantt/dist/frappe-gantt.css">
+<script src="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="{{ url_for('static', filename='js/roadmap.js') }}"></script>
+{% endblock %} 

@@ -1,0 +1,8 @@
+# Environment variables
+.env
+
+# Firebase admin credentials
+firebase-credentials.json
+
+# Firebase front-end config generated at runtime
+static/js/firebase-config.js 

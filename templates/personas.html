@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section id="personaBuilder" class="py-5">
+  <div class="container">
+    <h1 class="display-4 fw-bold text-center mb-4">Customer Persona Builder</h1>
+    <div class="row">
+      <!-- Persona Form -->
+      <div class="col-md-4">
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title">Create / Edit Persona</h5>
+            <form id="personaForm">
+              <input type="hidden" id="personaId">
+              <div class="mb-3">
+                <label for="personaName" class="form-label">Name</label>
+                <input type="text" class="form-control" id="personaName" required>
+              </div>
+              <div class="mb-3">
+                <label for="personaAge" class="form-label">Age</label>
+                <input type="number" class="form-control" id="personaAge">
+              </div>
+              <div class="mb-3">
+                <label for="personaJob" class="form-label">Job Title</label>
+                <input type="text" class="form-control" id="personaJob">
+              </div>
+              <div class="mb-3">
+                <label for="personaDemographics" class="form-label">Demographics</label>
+                <textarea class="form-control" id="personaDemographics" rows="2"></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="personaBehaviors" class="form-label">Behaviors</label>
+                <textarea class="form-control" id="personaBehaviors" rows="2"></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="personaGoals" class="form-label">Goals</label>
+                <textarea class="form-control" id="personaGoals" rows="2"></textarea>
+              </div>
+              <div class="mb-3">
+                <label for="personaPains" class="form-label">Pain Points</label>
+                <textarea class="form-control" id="personaPains" rows="2"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" id="savePersona">Save Persona</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <!-- Persona List -->
+      <div class="col-md-8">
+        <div id="personaList" class="row gy-4"></div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/personas.js') }}"></script>
+{% endblock %} 

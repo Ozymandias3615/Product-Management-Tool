@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section id="hero" class="d-flex align-items-center overflow-hidden" style="min-height: 70vh; padding-top: 2rem; padding-bottom: 3rem; background: #fff !important; overflow: hidden;" data-aos="fade-up">
+  <div class="container-fluid">
+    <div class="row align-items-stretch justify-content-center" style="min-height: 50vh; --bs-gutter-x: 4rem;">
+      <div class="col-lg-6 d-flex align-items-center justify-content-center">
+        <div class="p-4 rounded-4 bg-white bg-opacity-75 w-100" style="max-width: 600px;">
+          <h1 class="display-4 fw-bold mb-3 hero-heading">A Product Manager's Best Friend</h1>
+          <p class="lead mb-4">Leverage timeline views, <strong>Kanban boards</strong>, task delegation, <strong>Gantt charts</strong>, and real-time collaboration—plus build customer personas and analyze feedback with our integrated dashboard—all in one intuitive platform.</p>
+          <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start mt-auto">
+            <a href="/roadmaps" class="btn btn-primary btn-lg px-4">Get Started</a>
+            <a href="/demo" class="btn btn-outline-primary btn-lg px-4">View Demo</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 d-flex align-items-stretch">
+        <img 
+          src="{{ url_for('static', filename='img/homepage-banner.png') }}" 
+          alt="Product Roadmap Banner" 
+          class="img-fluid rounded-0 w-100 h-100"
+          style="object-fit: cover; min-height: 350px; max-height: 100vh;"
+        >
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Wave Divider -->
+<svg class="hero-divider" viewBox="0 0 1200 120" preserveAspectRatio="none" data-aos="fade-up" data-aos-delay="200">
+  <path d="M0,0 V40 C150,140 350,0 600,40 C850,80 1050,10 1200,40 V0H0Z" fill="#FFFFFF"></path>
+</svg>
+
+<!-- Combined Features/Why/Who Section -->
+<div class="py-5">
+  <!-- Feature Highlights Section -->
+  <div class="bg-white rounded-4 shadow-sm mb-5" data-aos="fade-up" data-aos-delay="200">
+    <section id="features" class="py-5" data-aos="fade-up" data-aos-delay="200">
+      <div class="container">
+        <h2 class="fw-bold text-center mb-3">Features</h2>
+        <div class="row g-4 justify-content-center">
+          <!-- Drag-and-Drop Interface -->
+          <div class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm text-center p-4 interactive-card">
+              <div class="fs-1 mb-3" data-bs-toggle="tooltip" title="Plan your roadmap visually and intuitively.">🔄</div>
+              <h4 class="fw-semibold mb-2">Drag-and-Drop Interface</h4>
+              <p class="mb-0">Plan your roadmap visually and intuitively.</p>
+            </div>
+          </div>
+          <!-- Milestone Tracking -->
+          <div class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm text-center p-4 interactive-card">
+              <div class="fs-1 mb-3" data-bs-toggle="tooltip" title="Keep launches on time and aligned with goals.">🏁</div>
+              <h4 class="fw-semibold mb-2">Milestone Tracking</h4>
+              <p class="mb-0">Keep launches on time and aligned with goals.</p>
+            </div>
+          </div>
+          <!-- Shareable & Exportable -->
+          <div class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm text-center p-4 interactive-card">
+              <div class="fs-1 mb-3" data-bs-toggle="tooltip" title="Generate public links or download as PDF.">🔗</div>
+              <h4 class="fw-semibold mb-2">Shareable & Exportable</h4>
+              <p class="mb-0">Generate public links or download as PDF.</p>
+            </div>
+          </div>
+          <!-- Roadmap Views -->
+          <div class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm text-center p-4 interactive-card">
+              <div class="fs-1 mb-3" data-bs-toggle="tooltip" title="Switch between timeline views & generate Gantt charts.">
+                <i class="bi bi-calendar3 text-primary"></i>
+              </div>
+              <h4 class="fw-semibold mb-2">Roadmap Views</h4>
+              <p class="mb-0">Visualize your strategy with timelines and Gantt charts.</p>
+            </div>
+          </div>
+          <!-- Agile Board & Tasks -->
+          <div class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm text-center p-4 interactive-card">
+              <div class="fs-1 mb-3" data-bs-toggle="tooltip" title="Manage features and delegate tasks via Kanban board.">📋</div>
+              <h4 class="fw-semibold mb-2">Board & Tasks</h4>
+              <p class="mb-0">Organize statuses on a Kanban board and assign tasks to your team.</p>
+            </div>
+          </div>
+          <!-- Collaboration & Feedback -->
+          <div class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm text-center p-4 interactive-card">
+              <div class="fs-1 mb-3" data-bs-toggle="tooltip" title="Collaborate in real time and gather feedback.">🤝</div>
+              <h4 class="fw-semibold mb-2">Collaboration & Feedback</h4>
+              <p class="mb-0">Work together seamlessly and analyze user feedback in one dashboard.</p>
+            </div>
+          </div>
+          <!-- Customer Insights -->
+          <div class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100 border-0 shadow-sm text-center p-4 interactive-card">
+              <div class="fs-1 mb-3" data-bs-toggle="tooltip" title="Build detailed customer personas and analyze feedback.">🎯</div>
+              <h4 class="fw-semibold mb-2">Customer Insights</h4>
+              <p class="mb-0">Create personas and gather feedback to shape your roadmap.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <!-- Why Choose Us Section -->
+  <div class="bg-white rounded-4 shadow-sm mb-5" data-aos="fade-up" data-aos-delay="100">
+    <section id="why" class="py-5" data-aos="fade-up" data-aos-delay="100">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-lg-8 text-center">
+            <h2 class="fw-bold mb-4">Why Choose Our Planner?</h2>
+            <ul class="list-unstyled fs-5 text-start mx-auto" style="max-width: 500px;">
+              <li class="mb-3"><i class="bi bi-check-circle-fill text-primary me-2"></i><strong>Enhanced Views</strong> – Interactive timelines and Gantt charts to visualize every milestone.</li>
+              <li class="mb-3"><i class="bi bi-check-circle-fill text-primary me-2"></i><strong>Agile Workflow</strong> – Kanban board and task delegation for seamless team management.</li>
+              <li class="mb-3"><i class="bi bi-check-circle-fill text-primary me-2"></i><strong>Real-Time Collaboration</strong> – Work with your team simultaneously and stay aligned.</li>
+              <li class="mb-3"><i class="bi bi-check-circle-fill text-primary me-2"></i><strong>Customer Insights</strong> – Build personas and analyze feedback with our integrated dashboard.</li>
+              <li class="mb-3"><i class="bi bi-check-circle-fill text-primary me-2"></i><strong>Shareable & Exportable</strong> – Generate public links or export your roadmap as a PDF.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <!-- Who It's For Section -->
+  <div class="bg-white rounded-4 shadow-sm" data-aos="fade-up" data-aos-delay="300">
+    <section id="who" class="py-5" data-aos="fade-up" data-aos-delay="300">
+      <div class="container">
+        <h2 class="fw-bold text-center mb-5">Who It's For</h2>
+        <div class="row gx-4 gy-5 justify-content-center">
+          <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm interactive-card who-card position-relative overflow-hidden">
+              <img src="{{ url_for('static', filename='img/product-manager.jpg') }}" class="card-img-top" alt="Product Managers">
+              <div class="card-body d-flex flex-column text-center">
+                <h5 class="card-title">Product Managers</h5>
+                <p class="card-text small text-secondary">Translate your strategic vision into a clear, actionable roadmap.</p>
+                <a href="#" class="btn btn-outline-primary mt-auto">Learn More</a>
+                <a href="#" class="stretched-link"></a>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm interactive-card who-card position-relative overflow-hidden">
+              <img src="{{ url_for('static', filename='img/startup.jpg') }}" class="card-img-top" alt="Startup Founders">
+              <div class="card-body d-flex flex-column text-center">
+                <h5 class="card-title">Startup Founders</h5>
+                <p class="card-text small text-secondary">Accelerate your product launches with confidence and alignment.</p>
+                <a href="#" class="btn btn-outline-primary mt-auto">Learn More</a>
+                <a href="#" class="stretched-link"></a>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm interactive-card who-card position-relative overflow-hidden">
+              <img src="{{ url_for('static', filename='img/agile-team.jpg') }}" class="card-img-top" alt="Agile Teams">
+              <div class="card-body d-flex flex-column text-center">
+                <h5 class="card-title">Agile Teams</h5>
+                <p class="card-text small text-secondary">Visualize tasks and workflows in a dynamic Kanban board.</p>
+                <a href="#" class="btn btn-outline-primary mt-auto">Learn More</a>
+                <a href="#" class="stretched-link"></a>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="card h-100 border-0 shadow-sm interactive-card who-card position-relative overflow-hidden">
+              <img src="{{ url_for('static', filename='img/project-lead.jpg') }}" class="card-img-top" alt="Project Leads">
+              <div class="card-body d-flex flex-column text-center">
+                <h5 class="card-title">Project Leads</h5>
+                <p class="card-text small text-secondary">Keep stakeholders informed with live roadmap updates.</p>
+                <a href="#" class="btn btn-outline-primary mt-auto">Learn More</a>
+                <a href="#" class="stretched-link"></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+{% endblock %} 

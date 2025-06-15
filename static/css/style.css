@@ -1,0 +1,397 @@
+/* Theme Variables */
+:root {
+    --bg-main: #F8F9FA;
+    --color-primary: #0056D2;
+    --text-secondary: #172B4D;
+    --status-planned: #6B778C;
+    --status-inprogress: #FFAB00;
+    --status-completed: #36B37E;
+    --status-blocked: #FF5630;
+}
+
+/* Global smooth scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Gradient Page Background */
+html, body {
+    height: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(90deg, #e3f0ff 0%, #e3f0ff 70%, #ffffff 100%) !important;
+    background-attachment: fixed;
+    color: var(--text-secondary);
+}
+body {
+    flex: 1 0 auto;
+}
+.main-content {
+    flex: 1 0 auto;
+}
+footer {
+    flex-shrink: 0;
+}
+
+/* Navbar Overrides */
+.navbar {
+    background-color: var(--color-primary) !important;
+}
+.navbar .navbar-brand,
+.navbar .nav-link {
+    color: #ffffff !important;
+}
+.navbar .nav-link.active {
+    color: #ffffff !important;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    border-radius: 0.5rem !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-primary:hover {
+    background-color: #0041a8 !important;
+    border-color: #0041a8 !important;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+.btn-danger {
+    background-color: var(--status-blocked) !important;
+    border-color: var(--status-blocked) !important;
+}
+.btn-danger:hover {
+    background-color: #e0492b !important;
+    border-color: #e0492b !important;
+}
+
+/* Timeline Header */
+.timeline-month {
+    background-color: #E4F0FF !important;
+    color: var(--color-primary) !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    font-weight: 600;
+    border-radius: 0.5rem !important;
+    border-bottom: 4px solid var(--color-primary) !important;
+    box-shadow: inset 0 -2px 0 var(--color-primary);
+}
+
+/* Feature Card Status Colors */
+.feature-card {
+    background-color: #fff !important;
+}
+.feature-card.planned,
+.feature-card.in-progress,
+.feature-card.completed {
+    background-color: #fff !important;
+}
+
+/* Priority Badge Colors */
+.feature-card .priority {
+    display: none !important;
+}
+
+/* Timeline View Styles */
+.timeline-view {
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    overflow-x: auto;
+    padding: 0 1.5rem;
+}
+
+/* Timeline Header Enhancements */
+.timeline-header {
+    background-color: #ffffff;
+    border-bottom: 2px solid #dee2e6;
+    padding: 1rem 1.5rem;
+}
+
+.timeline-months {
+    display: flex;
+    gap: 2rem;
+}
+
+.timeline-month {
+    flex: 0 0 260px;  /* wider columns */
+    padding: 1rem;
+    text-align: center;
+    font-weight: 500;
+    border-radius: 0.25rem;
+    font-size: 1.25rem;
+}
+
+/* Timeline Content Enhancements */
+.timeline-content {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem 1.5rem;
+    overflow-x: visible;
+}
+
+.timeline-column {
+    flex: 0 0 260px;  /* wider columns */
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 1rem !important;
+}
+
+/* Feature Card Enhancements */
+.feature-card {
+    background-color: #ffffff;
+    border: 1px solid #E1E4E8 !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05) !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+    position: relative;
+}
+
+/* Timeline Controls */
+.timeline-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .timeline-month,
+    .timeline-column {
+        flex: 0 0 180px;
+    }
+    
+    .timeline-controls {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .timeline-controls .btn-group {
+        width: 100%;
+    }
+    
+    .timeline-controls .btn-primary {
+        width: 100%;
+    }
+}
+
+/* Feature Detail Modal Pop-out Animation */
+#featureDetailModal .modal-dialog {
+    transform: scale(0.5);
+    transition: transform 0.3s ease-out;
+}
+#featureDetailModal.show .modal-dialog {
+    transform: scale(1);
+}
+
+/* Status indicator dot on left edge */
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+.feature-card.planned::before { background-color: var(--status-planned); }
+.feature-card.in-progress::before { background-color: var(--status-inprogress); }
+.feature-card.completed::before { background-color: var(--status-completed); }
+.feature-card.blocked::before { background-color: var(--status-blocked); }
+
+/* Kanban Board Styles */
+#kanban-board {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1rem;
+    overflow-x: auto;
+}
+.kanban-column {
+    background: var(--bg-main);
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    width: 260px;
+    min-width: 260px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.kanban-column h5 {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    text-transform: capitalize;
+}
+.kanban-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 50px;
+}
+
+/* Hero content box */
+.hero-content {
+    background: rgba(255,255,255,0.85) !important;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    display: inline-block;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Wave divider */
+.hero-divider {
+    display: block;
+    width: 100%;
+    height: 100px;
+    margin-top: -1px;
+}
+
+/* Hero Section Gradient */
+#hero {
+    background: transparent !important;
+}
+
+/* Remove hero gradient, let body gradient show through */
+#hero {
+    background: linear-gradient(135deg, #E4F7FF 0%, #F5F7FA 60%, #FFFFFF 100%);
+}
+
+/* Final override: ensure hero section is transparent so page gradient shows through */
+#hero {
+    background: transparent !important;
+}
+
+/* Hero section override: remove gradient and use solid white */
+#hero {
+    background: #fff !important;
+}
+
+/* Interactive Card Hover */
+.interactive-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.interactive-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+    background-color: var(--bg-main) !important;
+}
+
+/* Hero heading shadow */
+.hero-heading {
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.15);
+}
+
+/* Primary button enhancements */
+.btn-primary {
+    border-radius: 0.5rem !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.btn-primary:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Who It's For cards */
+.who-card .card-img-top {
+    height: 350px;
+    object-fit: cover;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.who-card:hover .card-img-top {
+    transform: scale(1.05);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* Why Section Gradient Override */
+#why {
+    background: transparent !important;
+}
+
+/* Section Titles */
+section h2.fw-bold {
+    font-size: 2.75rem;
+}
+
+/* Body Text Styling */
+section p,
+section li,
+.card-text,
+.lead {
+    font-weight: 300 !important;
+    color: rgba(23,43,77,0.85) !important;
+}
+
+/* Typography improvements */
+p, li {
+    line-height: 1.7 !important;
+}
+
+/* Outline primary button enhancements */
+.btn-outline-primary {
+    border-radius: 0.5rem !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.btn-outline-primary:hover {
+    background-color: var(--color-primary) !important;
+    border-color: var(--color-primary) !important;
+    color: #fff !important;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
+/* Section gradient background */
+.section-gradient {
+    background: linear-gradient(to bottom, #f5f9ff, #ffffff) !important;
+}
+
+/* Gantt Chart Container */
+#ganttChart {
+    width: 100%;
+    height: 600px;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+}
+
+/* Enhanced Gantt Grid Styling */
+#ganttChart .grid .grid-header rect {
+    fill: #fafafa !important;
+    stroke: #ccc !important;
+    stroke-width: 1 !important;
+}
+#ganttChart .grid .grid-row rect {
+    stroke: #eee !important;
+    stroke-width: 1 !important;
+}
+#ganttChart .grid .grid-row:nth-child(odd) rect {
+    fill: #ffffff !important;
+}
+#ganttChart .grid .grid-row:nth-child(even) rect {
+    fill: #f9fbfd !important;
+}
+#ganttChart .grid .grid-row-label {
+    font-size: 14px !important;
+    fill: #333 !important;
+    font-weight: 500;
+    text-anchor: start;
+}
+#ganttChart .grid .grid-header .tick-text {
+    font-size: 13px !important;
+    fill: #555 !important;
+    font-weight: 600;
+}
+
+/* Bar styling overrides for better contrast */
+#ganttChart .bar {
+    rx: 4;
+    ry: 4;
+}
+#ganttChart .bar .bar-inner {
+    fill-opacity: 0.8 !important;
+} 

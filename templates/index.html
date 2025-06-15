@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1>Roadmaps</h1>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoadmapModal">Add Roadmap</button>
+</div>
+<div id="roadmap-list" class="row gy-3">
+  <!-- Roadmap cards will be populated here -->
+</div>
+
+<!-- Add Roadmap Modal -->
+<div class="modal fade" id="addRoadmapModal" tabindex="-1" aria-labelledby="addRoadmapModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addRoadmapModalLabel">New Roadmap</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="roadmapName" class="form-label">Roadmap Name</label>
+          <input type="text" class="form-control" id="roadmapName" placeholder="Enter roadmap name" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="saveRoadmap">Save Roadmap</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/roadmaps.js') }}"></script>
+{% endblock %} 

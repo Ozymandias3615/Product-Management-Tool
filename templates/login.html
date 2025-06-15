@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center" style="min-height: 80vh;">
+  <div class="card shadow-lg p-4" style="max-width: 400px; width: 100%;">
+    <h2 class="mb-3 text-center" id="formTitle">Login</h2>
+    <div id="errorMsg" class="alert alert-danger d-none" role="alert"></div>
+    <form id="authForm">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email address</label>
+        <input type="email" class="form-control" id="email" required autocomplete="username">
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary w-100 mb-2" id="submitBtn">Login</button>
+      <div class="text-center mb-2">
+        <small>
+          <span id="toggleText">Don't have an account?</span>
+          <a href="#" id="toggleMode">Sign up</a>
+        </small>
+      </div>
+      <div class="d-flex align-items-center my-3">
+        <hr class="flex-grow-1">
+        <span class="mx-2 text-muted">or</span>
+        <hr class="flex-grow-1">
+      </div>
+      <button type="button" class="btn btn-outline-danger w-100" id="googleBtn">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px; margin-right:8px;"> Continue with Google
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/login.js') }}"></script>
+{% endblock %} 
