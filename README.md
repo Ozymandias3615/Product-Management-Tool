@@ -1,5 +1,4 @@
-# Product Roadmap Planner
-
+# Product Management Tool
 ## Overview
 A web-based application to help product managers visually plan, track, and collaborate on product roadmaps with integrated customer persona building and feedback analysis.
 
