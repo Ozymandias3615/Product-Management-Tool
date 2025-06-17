@@ -273,11 +273,12 @@ footer {
 
 /* Interactive Card Hover */
 .interactive-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    will-change: transform, box-shadow;
 }
 .interactive-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1) !important;
     background-color: var(--bg-main) !important;
 }
 
@@ -300,11 +301,11 @@ footer {
 .who-card .card-img-top {
     height: 350px;
     object-fit: cover;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.2s ease;
+    will-change: transform;
 }
 .who-card:hover .card-img-top {
-    transform: scale(1.05);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transform: scale(1.02);
 }
 
 /* Why Section Gradient Override */
@@ -352,46 +353,476 @@ p, li {
 /* Gantt Chart Container */
 #ganttChart {
     width: 100%;
-    height: 600px;
-    border: 1px solid #dee2e6;
-    border-radius: 0.25rem;
+    height: auto !important;
+    border: 2px solid var(--color-primary);
+    border-radius: 0.5rem;
     margin: 1rem 0;
-    overflow-x: auto;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #f8fcff, #ffffff);
+    box-shadow: 0 4px 12px rgba(0, 86, 210, 0.1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Enhanced Gantt Grid Styling */
+/* Gantt Wrapper Styling */
+#ganttChart .gantt-wrapper {
+    width: 100% !important;
+    overflow: auto !important;
+    flex: 0 0 auto !important;
+}
+
+/* Force compact Gantt elements */
+#ganttChart .gantt-wrapper .gantt {
+    height: auto !important;
+    max-height: none !important;
+}
+
+#ganttChart .gantt-wrapper svg {
+    height: auto !important;
+    max-height: none !important;
+}
+
+/* Remove excessive padding/margins */
+#ganttChart .grid-row {
+    margin: 0 !important;
+    padding: 1px 0 !important;
+}
+
+#ganttChart .bar-wrapper {
+    margin: 2px 0 !important;
+}
+
+/* Gantt Chart Elements */
+#ganttChart .gantt {
+    width: 100% !important;
+    background: transparent !important;
+}
+
+#ganttChart .gantt-container {
+    background: transparent !important;
+}
+
+/* Loading and Error States */
+#ganttChart .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+#ganttChart .display-4 {
+    font-size: 3rem;
+    opacity: 0.7;
+}
+
+/* Enhanced Gantt Grid Styling - Blue Theme */
 #ganttChart .grid .grid-header rect {
-    fill: #fafafa !important;
-    stroke: #ccc !important;
-    stroke-width: 1 !important;
+    fill: var(--color-primary) !important;
+    stroke: #0041a8 !important;
+    stroke-width: 2 !important;
 }
 #ganttChart .grid .grid-row rect {
-    stroke: #eee !important;
+    stroke: #E4F0FF !important;
     stroke-width: 1 !important;
 }
 #ganttChart .grid .grid-row:nth-child(odd) rect {
     fill: #ffffff !important;
 }
 #ganttChart .grid .grid-row:nth-child(even) rect {
-    fill: #f9fbfd !important;
+    fill: #f8fcff !important;
 }
 #ganttChart .grid .grid-row-label {
     font-size: 14px !important;
-    fill: #333 !important;
-    font-weight: 500;
+    fill: var(--text-secondary) !important;
+    font-weight: 600;
     text-anchor: start;
 }
 #ganttChart .grid .grid-header .tick-text {
     font-size: 13px !important;
-    fill: #555 !important;
-    font-weight: 600;
+    fill: #ffffff !important;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
-/* Bar styling overrides for better contrast */
+/* Blue-themed Bar Styling */
 #ganttChart .bar {
-    rx: 4;
-    ry: 4;
+    rx: 6;
+    ry: 6;
+    filter: drop-shadow(0 2px 4px rgba(0, 86, 210, 0.2));
 }
+
+/* Status-based Bar Colors - Blue Theme */
 #ganttChart .bar .bar-inner {
-    fill-opacity: 0.8 !important;
+    fill-opacity: 0.9 !important;
+}
+
+/* Planned tasks - Light blue */
+#ganttChart .bar.low .bar-inner,
+#ganttChart .bar.planned .bar-inner {
+    fill: #B3D7FF !important;
+    stroke: #0056D2 !important;
+    stroke-width: 2 !important;
+}
+
+/* In-progress tasks - Primary blue */
+#ganttChart .bar.medium .bar-inner,
+#ganttChart .bar.in-progress .bar-inner {
+    fill: var(--color-primary) !important;
+    stroke: #0041a8 !important;
+    stroke-width: 2 !important;
+}
+
+/* High priority/Completed tasks - Dark blue */
+#ganttChart .bar.high .bar-inner,
+#ganttChart .bar.completed .bar-inner {
+    fill: #003d99 !important;
+    stroke: #002966 !important;
+    stroke-width: 2 !important;
+}
+
+/* Gantt Progress Bars - Blue Theme */
+#ganttChart .bar .bar-progress {
+    fill: rgba(255, 255, 255, 0.3) !important;
+    stroke: rgba(255, 255, 255, 0.5) !important;
+    stroke-width: 1 !important;
+}
+
+/* Gantt Hover Effects */
+#ganttChart .bar:hover .bar-inner {
+    filter: brightness(1.1) !important;
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+}
+
+/* Gantt Today Line */
+#ganttChart .today-highlight {
+    stroke: #FF6B35 !important;
+    stroke-width: 3 !important;
+    stroke-dasharray: 5,5 !important;
+}
+
+/* Gantt View Mode Selector Integration */
+#ganttChart .view-mode {
+    background: var(--color-primary) !important;
+    color: white !important;
+    border-radius: 0.25rem !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 600 !important;
+}
+
+/* Gantt Chart Content Styling */
+#ganttChart .gantt-container {
+    overflow: visible;
+}
+
+#ganttChart svg {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Responsive view mode adaptations */
+@media (max-width: 768px) {
+    #ganttChart {
+        height: 400px;
+        font-size: 0.875rem;
+    }
+    
+    #ganttChart .grid .grid-row-label {
+        font-size: 12px !important;
+    }
+    
+    #ganttChart .grid .grid-header .tick-text {
+        font-size: 11px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    #ganttChart {
+        height: 350px;
+        font-size: 0.8rem;
+    }
+    
+    #ganttChart .view-mode {
+        padding: 0.25rem 0.5rem !important;
+        font-size: 0.8rem !important;
+    }
+}
+
+/* Empty state styling */
+#ganttChart .text-muted {
+    color: var(--text-secondary) !important;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+/* Clean Modal Styles */
+.clean-modal {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.clean-modal-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, #4A90E2 100%);
+    border-bottom: none;
+    padding: 20px 24px;
+    color: white;
+}
+
+.clean-modal-header .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+.clean-modal-header .modal-title i {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 16px;
+}
+
+.clean-modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+    opacity: 0.8;
+}
+
+.clean-modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+.clean-modal-body {
+    padding: 24px;
+    background: white;
+}
+
+.clean-form .form-group {
+    margin-bottom: 20px;
+}
+
+.clean-form .form-label {
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 6px;
+    font-size: 14px;
+    display: block;
+}
+
+.clean-input {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #2d3748;
+    background: white;
+    width: 100%;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.clean-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 86, 210, 0.1);
+}
+
+.clean-input::placeholder {
+    color: #a0aec0;
+    font-style: normal;
+}
+
+.clean-modal-footer {
+    background: #f7fafc;
+    border-top: 1px solid #e9ecef;
+    padding: 16px 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.clean-btn-primary {
+    background: var(--color-primary);
+    border: 1px solid var(--color-primary);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.clean-btn-primary:hover {
+    background: #0041a8;
+    border-color: #0041a8;
+}
+
+.clean-modal-footer .btn-secondary {
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #4a5568;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.clean-modal-footer .btn-secondary:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+    color: #2d3748;
+}
+
+/* Form validation states - removed red styling */
+.clean-input:invalid {
+    border-color: #e2e8f0;
+}
+
+.clean-input:invalid:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(0, 86, 210, 0.1);
+}
+
+/* Remove enhanced modal styles that conflict */
+.enhanced-modal,
+.enhanced-modal-header,
+.enhanced-modal-body,
+.enhanced-modal-footer,
+.enhanced-input,
+.enhanced-textarea,
+.enhanced-select,
+.enhanced-btn-primary,
+.enhanced-btn-secondary,
+.enhanced-form,
+.modal-title-container,
+.modal-icon {
+    /* Reset styles */
+}
+
+/* Feature Detail Modal Styles */
+.feature-detail-content {
+    padding: 0;
+}
+
+.feature-title-section {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.feature-detail-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 12px;
+    line-height: 1.3;
+}
+
+.feature-detail-description {
+    font-size: 16px;
+    color: #4a5568;
+    line-height: 1.6;
+    margin-bottom: 0;
+}
+
+.feature-meta-section {
+    margin-top: 0;
+}
+
+.detail-item {
+    margin-bottom: 20px;
+}
+
+.detail-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 8px;
+}
+
+.detail-label i {
+    color: var(--color-primary);
+    opacity: 0.8;
+}
+
+.detail-value {
+    display: inline-block;
+    font-size: 15px;
+    color: #2d3748;
+    font-weight: 500;
+}
+
+/* Priority and Status Badges */
+.priority-badge,
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.priority-badge.high {
+    background-color: #fed7d7;
+    color: #c53030;
+}
+
+.priority-badge.medium {
+    background-color: #feebc8;
+    color: #dd6b20;
+}
+
+.priority-badge.low {
+    background-color: #c6f6d5;
+    color: #38a169;
+}
+
+.status-badge.planned {
+    background-color: #e2e8f0;
+    color: #4a5568;
+}
+
+.status-badge.in-progress {
+    background-color: #bee3f8;
+    color: #2b6cb0;
+}
+
+.status-badge.completed {
+    background-color: #c6f6d5;
+    color: #38a169;
+}
+
+/* Delete button styling */
+.btn-outline-danger {
+    border: 1px solid #e53e3e;
+    color: #e53e3e;
+    background: white;
+    font-weight: 500;
+    font-size: 14px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-danger:hover {
+    background: #e53e3e;
+    color: white;
+    border-color: #e53e3e;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .feature-detail-title {
+        font-size: 20px;
+    }
+    
+    .feature-detail-description {
+        font-size: 14px;
+    }
+    
+    .detail-item {
+        margin-bottom: 16px;
+    }
 } 

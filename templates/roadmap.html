@@ -34,83 +34,129 @@
         </button>
     </div>
 
-    <!-- Timeline Controls -->
-    <div id="timelineControls" class="timeline-controls mb-4 d-none">
-        <div class="btn-group" role="group">
-            <button type="button" class="btn btn-outline-primary active" data-view="month">Month</button>
-            <button type="button" class="btn btn-outline-primary" data-view="quarter">Quarter</button>
-            <button type="button" class="btn btn-outline-primary" data-view="sprint">Sprint</button>
-            <button type="button" class="btn btn-outline-primary" data-view="release">Releases</button>
-            <button type="button" class="btn btn-outline-primary" data-view="kanban">Kanban</button>
-            <button type="button" class="btn btn-outline-primary" data-view="gantt">Gantt</button>
-        </div>
-    </div>
+    <!-- Main Content Area with Sidebar -->
+    <div id="mainContentArea" class="main-content-area d-none">
+        <div class="d-flex">
+            <!-- Left Sidebar with View Controls -->
+            <div id="viewSidebar" class="view-sidebar">
+                <div class="sidebar-header">
+                    <h6 class="sidebar-title">Views</h6>
+                </div>
+                <div class="view-buttons">
+                    <button type="button" class="view-btn active" data-view="month">
+                        <i class="bi bi-calendar-month"></i>
+                        <span>Month</span>
+                    </button>
+                    <button type="button" class="view-btn" data-view="quarter">
+                        <i class="bi bi-calendar3"></i>
+                        <span>Quarter</span>
+                    </button>
+                    <button type="button" class="view-btn" data-view="sprint">
+                        <i class="bi bi-speedometer"></i>
+                        <span>Sprint</span>
+                    </button>
+                    <button type="button" class="view-btn" data-view="release">
+                        <i class="bi bi-box-seam"></i>
+                        <span>Releases</span>
+                    </button>
+                    <button type="button" class="view-btn" data-view="kanban">
+                        <i class="bi bi-kanban"></i>
+                        <span>Kanban</span>
+                    </button>
+                    <button type="button" class="view-btn" data-view="gantt">
+                        <i class="bi bi-diagram-3"></i>
+                        <span>Gantt</span>
+                    </button>
+                </div>
+            </div>
 
-    <!-- Timeline View -->
-    <div id="timelineView" class="timeline-view d-none">
-        <div class="timeline-header">
-            <div class="timeline-months">
-                <!-- Months or Releases will be dynamically populated -->
+            <!-- Right Content Area -->
+            <div class="content-area flex-grow-1">
+                <!-- Timeline View -->
+                <div id="timelineView" class="timeline-view d-none">
+                    <div class="timeline-header">
+                        <div class="timeline-months">
+                            <!-- Months or Releases will be dynamically populated -->
+                        </div>
+                    </div>
+                    <div class="timeline-content">
+                        <!-- Features will be dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Kanban Board -->
+                <div id="kanban-board" class="d-none"></div>
+                <!-- Gantt Chart -->
+                <div id="ganttChart" class="d-none"></div>
             </div>
         </div>
-        <div class="timeline-content">
-            <!-- Features will be dynamically populated -->
-        </div>
     </div>
-
-    <!-- Kanban Board -->
-    <div id="kanban-board" class="d-none"></div>
-    <!-- Gantt Chart -->
-    <div id="ganttChart" class="d-none"></div>
 </div>
 
 <!-- Add Feature Modal -->
 <div class="modal fade" id="addFeatureModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add/Edit Feature</h5>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content clean-modal">
+            <div class="modal-header clean-modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-plus-circle me-2"></i>Add New Feature
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <form id="featureForm">
-                    <div class="mb-3">
+            <div class="modal-body clean-modal-body">
+                <form id="featureForm" class="clean-form">
+                    <div class="form-group">
                         <label for="featureTitle" class="form-label">Title</label>
-                        <input type="text" class="form-control" id="featureTitle" required>
+                        <input type="text" class="form-control clean-input" id="featureTitle" placeholder="Enter feature title" required>
                     </div>
-                    <div class="mb-3">
+
+                    <div class="form-group">
                         <label for="featureDescription" class="form-label">Description</label>
-                        <textarea class="form-control" id="featureDescription" rows="3"></textarea>
+                        <textarea class="form-control clean-input" id="featureDescription" rows="4" placeholder="Describe what this feature will do..."></textarea>
                     </div>
-                    <div class="mb-3">
-                        <label for="featureRelease" class="form-label">Release</label>
-                        <input type="text" class="form-control" id="featureRelease" placeholder="e.g. Q3 Release">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="featureRelease" class="form-label">Release</label>
+                                <input type="text" class="form-control clean-input" id="featureRelease" placeholder="e.g., v1.2.0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="featureDate" class="form-label">Target Date</label>
+                                <input type="date" class="form-control clean-input" id="featureDate" required>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label for="featurePriority" class="form-label">Priority</label>
-                        <select class="form-select" id="featurePriority">
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="featureStatus" class="form-label">Status</label>
-                        <select class="form-select" id="featureStatus">
-                            <option value="planned">Planned</option>
-                            <option value="in-progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="featureDate" class="form-label">Release Date</label>
-                        <input type="date" class="form-control" id="featureDate" required>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="featurePriority" class="form-label">Priority</label>
+                                <select class="form-select clean-input" id="featurePriority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="featureStatus" class="form-label">Status</label>
+                                <select class="form-select clean-input" id="featureStatus">
+                                    <option value="planned" selected>Planned</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="saveFeature">Save Feature</button>
+            <div class="modal-footer clean-modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary clean-btn-primary" id="saveFeature">Save Feature</button>
             </div>
         </div>
     </div>
@@ -119,21 +165,68 @@
 <!-- Feature Detail Modal -->
 <div class="modal fade" id="featureDetailModal" tabindex="-1" aria-labelledby="featureDetailModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="featureDetailModalLabel">Feature Details</h5>
+        <div class="modal-content clean-modal">
+            <div class="modal-header clean-modal-header">
+                <h5 class="modal-title" id="featureDetailModalLabel">
+                    <i class="bi bi-info-circle me-2"></i>Feature Details
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <h5 id="detailTitle"></h5>
-                <p id="detailDescription"></p>
-                <p><strong>Priority:</strong> <span id="detailPriority"></span></p>
-                <p><strong>Status:</strong> <span id="detailStatus"></span></p>
-                <p><strong>Release Date:</strong> <span id="detailDate"></span></p>
+            <div class="modal-body clean-modal-body">
+                <div class="feature-detail-content">
+                    <div class="feature-title-section">
+                        <h4 id="detailTitle" class="feature-detail-title"></h4>
+                        <p id="detailDescription" class="feature-detail-description"></p>
+                    </div>
+                    
+                    <div class="feature-meta-section">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="detail-label">
+                                        <i class="bi bi-flag me-2"></i>Priority
+                                    </label>
+                                    <span id="detailPriority" class="detail-value priority-badge"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="detail-label">
+                                        <i class="bi bi-speedometer me-2"></i>Status
+                                    </label>
+                                    <span id="detailStatus" class="detail-value status-badge"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="detail-label">
+                                        <i class="bi bi-box-seam me-2"></i>Release
+                                    </label>
+                                    <span id="detailRelease" class="detail-value"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="detail-label">
+                                        <i class="bi bi-calendar-event me-2"></i>Target Date
+                                    </label>
+                                    <span id="detailDate" class="detail-value"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-danger" id="deleteFeatureBtn">Delete</button>
-                <button type="button" class="btn btn-primary" id="editFeatureBtn">Edit</button>
+            <div class="modal-footer clean-modal-footer">
+                <button type="button" class="btn btn-outline-danger" id="deleteFeatureBtn">
+                    <i class="bi bi-trash me-2"></i>Delete
+                </button>
+                <button type="button" class="btn btn-primary clean-btn-primary" id="editFeatureBtn">
+                    <i class="bi bi-pencil me-2"></i>Edit
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>

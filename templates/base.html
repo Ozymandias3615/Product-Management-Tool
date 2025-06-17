@@ -69,7 +69,7 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Firebase Config -->
-    <script src="{{ url_for('firebase_config_js') }}"></script>
+    <script src="{{ url_for('static', filename='js/firebase-config.js') }}"></script>
     <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/auth.js') }}"></script>
     {% block scripts %}{% endblock %}
@@ -82,7 +82,7 @@
           </div>
           <div class="col-md-6 text-md-end">
             <ul class="list-inline mb-0">
-              <li class="list-inline-item"><a href="https://github.com/your-repo" class="text-light"><i class="bi bi-github me-1"></i>GitHub</a></li>
+                              <li class="list-inline-item"><a href="https://github.com/Ozymandias3615" class="text-light"><i class="bi bi-github me-1"></i>GitHub</a></li>
               <li class="list-inline-item"><a href="/terms" class="text-light"><i class="bi bi-file-text-fill me-1"></i>Terms</a></li>
               <li class="list-inline-item"><a href="/privacy" class="text-light"><i class="bi bi-shield-lock-fill me-1"></i>Privacy</a></li>
               <li class="list-inline-item"><a href="https://www.linkedin.com/in/nanabanyin-abbiw/" class="text-light"><i class="bi bi-linkedin me-1"></i>LinkedIn</a></li>
@@ -93,6 +93,15 @@
     </footer>
     <!-- AOS JS -->
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-    <script>AOS.init({ duration: 800, once: true });</script>
+    <script>
+        AOS.init({ 
+            duration: 600, 
+            once: true,
+            offset: 50,
+            delay: 0,
+            easing: 'ease-in-out',
+            disable: 'mobile'
+        });
+    </script>
 </body>
 </html> 
