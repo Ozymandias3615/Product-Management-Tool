@@ -11,7 +11,7 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
-app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key')
+app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///roadmap.db')
@@ -49,8 +49,7 @@ class Persona(db.Model):
 
 # Create database tables on startup
 def init_db():
-    # Drop all existing tables and recreate them (development only)
-    db.drop_all()
+    # Create tables if they don't exist (preserves existing data)
     db.create_all()
 
 # API to get all roadmaps
@@ -428,10 +427,22 @@ if __name__ == '__main__':
     # Initialize database tables
     with app.app_context():
         init_db()
-    # Use HTTPS for development with a self-signed cert
-    app.run(
-        host='127.0.0.1',
-        port=5000,
-        debug=True,
-        ssl_context='adhoc'  # Enable self-signed SSL for development
-    ) 
+    
+    # Check if running in production
+    is_production = os.getenv('FLASK_ENV') == 'production'
+    
+    if is_production:
+        # Production settings
+        app.run(
+            host='0.0.0.0',
+            port=int(os.getenv('PORT', 5000)),
+            debug=False
+        )
+    else:
+        # Development settings with HTTPS
+        app.run(
+            host='127.0.0.1',
+            port=5000,
+            debug=True,
+            ssl_context='adhoc'  # Enable self-signed SSL for development
+        ) 
