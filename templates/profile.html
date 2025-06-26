@@ -1,21 +1,320 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container my-5">
-  <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card p-4 shadow">
-        <h2 class="mb-4 text-center">Your Profile</h2>
-        <div class="text-center mb-3">
-          <img src="{{ url_for('static', filename='img/default-profile.svg') }}" alt="Profile Picture" class="rounded-circle mb-3" width="100" height="100">
+    <div class="row">
+        <!-- Profile Header -->
+        <div class="col-12 mb-4">
+            <div class="profile-header">
+                <h1 class="display-6 fw-bold text-center mb-0">My Profile</h1>
+                <p class="text-muted text-center">Manage your account settings and preferences</p>
+            </div>
         </div>
-        <p><strong>Name:</strong> <span id="profileName"></span></p>
-        <p><strong>Email:</strong> <span id="profileEmail"></span></p>
-        <button id="logoutBtn" class="btn btn-danger w-100 mt-3">Logout</button>
-      </div>
+        
+        <!-- Main Profile Content -->
+        <div class="col-lg-4 mb-4">
+            <!-- Profile Card -->
+            <div class="card modern-profile-card shadow-lg border-0">
+                <div class="card-body text-center p-4">
+                    <div class="profile-avatar-container mb-3">
+                        <img id="profileAvatar" src="{{ url_for('static', filename='img/default-profile.svg') }}" 
+                             alt="Profile Picture" class="profile-avatar">
+                        <div class="avatar-overlay">
+                            <i class="bi bi-camera text-white"></i>
+                        </div>
+                    </div>
+                    <h4 id="profileDisplayName" class="fw-bold mb-1">Loading...</h4>
+                    <p id="profileEmail" class="text-muted mb-3">Loading...</p>
+                    <div class="profile-stats">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="stat-item" title="Total roadmaps you own or are a member of">
+                                    <h5 id="roadmapCount" class="fw-bold text-primary mb-0">0</h5>
+                                    <small class="text-muted">Roadmaps</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item" title="Roadmaps where you are a team member (not owner)">
+                                    <h5 id="teamCount" class="fw-bold text-success mb-0">0</h5>
+                                    <small class="text-muted">Teams</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item" title="Total features across all your accessible roadmaps">
+                                    <h5 id="featureCount" class="fw-bold text-info mb-0">0</h5>
+                                    <small class="text-muted">Features</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="card modern-card mt-4 border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h6 class="fw-bold mb-0">Quick Actions</h6>
+                </div>
+                <div class="card-body pt-2">
+                    <div class="d-grid gap-2">
+                        <a href="/roadmaps" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-map me-2"></i>View My Roadmaps
+                        </a>
+                        <button class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#createRoadmapModal">
+                            <i class="bi bi-plus-circle me-2"></i>Create New Roadmap
+                        </button>
+                        <a href="/personas" class="btn btn-outline-info btn-sm">
+                            <i class="bi bi-people me-2"></i>Manage Personas
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Profile Information -->
+        <div class="col-lg-8">
+            <!-- Account Information -->
+            <div class="card modern-card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold mb-0">Account Information</h6>
+                    <button class="btn btn-sm btn-outline-primary" onclick="toggleEditMode()">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </button>
+                </div>
+                <div class="card-body">
+                    <form id="profileForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Full Name</label>
+                                <input type="text" class="form-control modern-input" id="fullName" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Username</label>
+                                <input type="text" class="form-control modern-input" id="username" readonly>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-semibold">Email Address</label>
+                                <input type="email" class="form-control modern-input" id="emailAddress" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Member Since</label>
+                                <input type="text" class="form-control modern-input" id="memberSince" readonly>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Last Login</label>
+                                <input type="text" class="form-control modern-input" id="lastLogin" readonly>
+                            </div>
+                        </div>
+                        <div id="editActions" class="d-none mt-3">
+                            <button type="button" class="btn btn-primary me-2" onclick="saveProfile()">
+                                <i class="bi bi-check-lg me-1"></i>Save Changes
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
+                                <i class="bi bi-x-lg me-1"></i>Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Recent Activity -->
+            <div class="card modern-card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0">
+                    <h6 class="fw-bold mb-0">Recent Activity</h6>
+                </div>
+                <div class="card-body">
+                    <div id="recentActivity">
+                        <div class="text-center text-muted py-3">
+                            <i class="bi bi-clock-history display-4 mb-2"></i>
+                            <p>Loading recent activity...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Account Settings -->
+            <div class="card modern-card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h6 class="fw-bold mb-0">Account Settings</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="emailNotifications" checked>
+                                <label class="form-check-label fw-semibold" for="emailNotifications">
+                                    Email Notifications
+                                </label>
+                                <small class="d-block text-muted">Receive updates about your roadmaps</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="weeklyDigest" checked>
+                                <label class="form-check-label fw-semibold" for="weeklyDigest">
+                                    Weekly Digest
+                                </label>
+                                <small class="d-block text-muted">Get weekly summary of your projects</small>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="fw-bold mb-1">Danger Zone</h6>
+                            <small class="text-muted">Permanently delete your account and all data</small>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm" onclick="confirmDeleteAccount()">
+                            <i class="bi bi-trash me-1"></i>Delete Account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
+
+<!-- Create Roadmap Modal -->
+<div class="modal fade" id="createRoadmapModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modern-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Create New Roadmap</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newRoadmapForm">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Roadmap Name</label>
+                        <input type="text" class="form-control modern-input" id="roadmapName" placeholder="Enter roadmap name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea class="form-control modern-input" id="roadmapDescription" rows="3" placeholder="Brief description of your roadmap"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createRoadmap()">
+                    <i class="bi bi-plus-circle me-1"></i>Create Roadmap
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-header {
+    background: linear-gradient(135deg, var(--color-primary), #4f46e5);
+    color: white;
+    padding: 3rem 2rem;
+    border-radius: 1rem;
+    margin-bottom: 2rem;
+}
+
+.modern-profile-card {
+    border-radius: 1rem;
+    background: linear-gradient(135deg, #ffffff, #f8fafc);
+}
+
+.profile-avatar-container {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid var(--color-primary);
+    object-fit: cover;
+}
+
+.avatar-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: var(--color-primary);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.avatar-overlay:hover {
+    transform: scale(1.1);
+    background: #0041a8;
+}
+
+.profile-stats {
+    background: rgba(0, 86, 210, 0.05);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    cursor: help;
+    transition: all 0.3s ease;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.stat-item:hover {
+    background: rgba(0, 86, 210, 0.1);
+    transform: translateY(-2px);
+}
+
+.stat-item h5 {
+    font-size: 1.5rem;
+}
+
+.modern-card {
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.modern-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.modern-input {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.modern-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 210, 0.25);
+}
+
+.modern-modal {
+    border-radius: 1rem;
+    border: none;
+}
+
+.activity-item {
+    padding: 0.75rem;
+    border-left: 3px solid var(--color-primary);
+    background: rgba(0, 86, 210, 0.05);
+    border-radius: 0 0.5rem 0.5rem 0;
+    margin-bottom: 0.75rem;
+}
+
+.activity-item:last-child {
+    margin-bottom: 0;
+}
+</style>
 {% endblock %}
+
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
+<script src="{{ url_for('static', filename='js/profile-animations.js') }}"></script>
 {% endblock %} 

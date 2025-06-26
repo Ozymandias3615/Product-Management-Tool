@@ -5,9 +5,36 @@
     <!-- Roadmap Title -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 id="roadmapTitle" class="h2">{{ roadmap_name }}</h1>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFeatureModal">
-            Add Feature
+        <div class="d-flex gap-2">
+            <!-- Team Management Button (Admin+ only) -->
+            <button id="teamButton" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#teamModal">
+                <i class="bi bi-people me-1"></i>Team
+            </button>
+            
+            <!-- Share/Export (Member+ only) -->
+            <div id="shareExportGroup" class="btn-group">
+                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#shareModal">
+                    <i class="bi bi-share"></i> Share
+                </button>
+                <button class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                    <span class="visually-hidden">Export options</span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="exportCSV()">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export CSV
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#analyticsModal">
+                        <i class="bi bi-graph-up me-2"></i>View Analytics
+                    </a></li>
+                </ul>
+            </div>
+            
+            <!-- Add Feature Button (Member+ only) -->
+            <button id="addFeatureButton" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFeatureModal">
+                <i class="bi bi-plus-circle me-1"></i>Add Feature
         </button>
+        </div>
     </div>
 
     <!-- Loading State -->
@@ -67,27 +94,27 @@
                         <i class="bi bi-diagram-3"></i>
                         <span>Gantt</span>
                     </button>
-                </div>
-            </div>
+        </div>
+    </div>
 
             <!-- Right Content Area -->
             <div class="content-area flex-grow-1">
-                <!-- Timeline View -->
-                <div id="timelineView" class="timeline-view d-none">
-                    <div class="timeline-header">
-                        <div class="timeline-months">
-                            <!-- Months or Releases will be dynamically populated -->
-                        </div>
-                    </div>
-                    <div class="timeline-content">
-                        <!-- Features will be dynamically populated -->
-                    </div>
-                </div>
+    <!-- Timeline View -->
+    <div id="timelineView" class="timeline-view d-none">
+        <div class="timeline-header">
+            <div class="timeline-months">
+                <!-- Months or Releases will be dynamically populated -->
+            </div>
+        </div>
+        <div class="timeline-content">
+            <!-- Features will be dynamically populated -->
+        </div>
+    </div>
 
-                <!-- Kanban Board -->
-                <div id="kanban-board" class="d-none"></div>
-                <!-- Gantt Chart -->
-                <div id="ganttChart" class="d-none"></div>
+    <!-- Kanban Board -->
+    <div id="kanban-board" class="d-none"></div>
+    <!-- Gantt Chart -->
+    <div id="ganttChart" class="d-none"></div>
             </div>
         </div>
     </div>
@@ -118,7 +145,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="featureRelease" class="form-label">Release</label>
+                        <label for="featureRelease" class="form-label">Release</label>
                                 <input type="text" class="form-control clean-input" id="featureRelease" placeholder="e.g., v1.2.0">
                             </div>
                         </div>
@@ -133,23 +160,23 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="featurePriority" class="form-label">Priority</label>
+                        <label for="featurePriority" class="form-label">Priority</label>
                                 <select class="form-select clean-input" id="featurePriority">
-                                    <option value="low">Low</option>
+                            <option value="low">Low</option>
                                     <option value="medium" selected>Medium</option>
-                                    <option value="high">High</option>
-                                </select>
-                            </div>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="featureStatus" class="form-label">Status</label>
+                        <label for="featureStatus" class="form-label">Status</label>
                                 <select class="form-select clean-input" id="featureStatus">
                                     <option value="planned" selected>Planned</option>
-                                    <option value="in-progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
                         </div>
                     </div>
                 </form>
@@ -233,6 +260,328 @@
     </div>
 </div>
 
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content clean-modal">
+            <div class="modal-header clean-modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-share me-2"></i>Share Roadmap
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body clean-modal-body">
+                <!-- Create New Share Link -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Create New Share Link</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="shareForm">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Link Title</label>
+                                    <input type="text" class="form-control" id="shareTitle" value="{{ roadmap_name }} - Shared">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Access Level</label>
+                                    <select class="form-select" id="shareAccessLevel">
+                                        <option value="view">View Only</option>
+                                        <option value="comment">View & Comment</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description (Optional)</label>
+                                <textarea class="form-control" id="shareDescription" rows="2" placeholder="Brief description of this shared roadmap"></textarea>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="sharePasswordProtected">
+                                        <label class="form-check-label" for="sharePasswordProtected">
+                                            Password Protected
+                                        </label>
+                                    </div>
+                                    <input type="password" class="form-control mt-2 d-none" id="sharePassword" placeholder="Enter password">
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="shareAllowEmbed" checked>
+                                        <label class="form-check-label" for="shareAllowEmbed">
+                                            Allow Embedding
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="shareExpires">
+                                        <label class="form-check-label" for="shareExpires">
+                                            Set Expiration
+                                        </label>
+                                    </div>
+                                    <input type="datetime-local" class="form-control mt-2 d-none" id="shareExpiresAt">
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary" onclick="createShareLink()">
+                                <i class="bi bi-plus-circle me-1"></i>Create Share Link
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Existing Share Links -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Existing Share Links</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="shareLinksContainer">
+                            <div class="text-center text-muted py-3">
+                                <i class="bi bi-link-45deg display-4"></i>
+                                <p>No share links created yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Modal -->
+<div class="modal fade" id="analyticsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content clean-modal">
+            <div class="modal-header clean-modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-graph-up me-2"></i>Roadmap Analytics
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body clean-modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Share Link Performance</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="shareAnalytics">
+                                    <div class="text-center text-muted py-3">
+                                        <i class="bi bi-bar-chart display-4"></i>
+                                        <p>No analytics data available</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Export History</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="exportHistory">
+                                    <div class="text-center text-muted py-3">
+                                        <i class="bi bi-download display-4"></i>
+                                        <p>No exports yet</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Management Modal -->
+<div class="modal fade" id="teamModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content clean-modal">
+            <div class="modal-header clean-modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-people me-2"></i>Team Management
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body clean-modal-body">
+                <!-- Team Invitation Links -->
+                <div id="invitationLinksSection" class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Team Invitation Links</h6>
+                        <button id="createInvitationBtn" class="btn btn-sm btn-outline-primary" onclick="showCreateInvitationForm()">
+                            <i class="bi bi-link-45deg me-1"></i>Create Link
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Create Invitation Form (hidden by default) -->
+                        <div id="createInvitationForm" style="display: none;">
+                            <form id="invitationForm">
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Role</label>
+                                        <select class="form-select" id="invitationRole">
+                                            <option value="viewer">Viewer</option>
+                                            <option value="member" selected>Member</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Expires (hours)</label>
+                                        <input type="number" class="form-control" id="invitationExpires" placeholder="24">
+                                        <small class="text-muted">Leave blank for no expiration</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">Max Uses</label>
+                                        <input type="number" class="form-control" id="invitationMaxUses" placeholder="10">
+                                        <small class="text-muted">Leave blank for unlimited</small>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" onclick="createInvitationLink()">
+                                        <i class="bi bi-plus-circle me-1"></i>Create Invitation Link
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="hideCreateInvitationForm()">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                            <hr>
+                        </div>
+                        
+                        <!-- Existing Invitation Links -->
+                        <div id="invitationLinksContainer">
+                            <div class="text-center text-muted py-3">
+                                <i class="bi bi-link-45deg display-4"></i>
+                                <p>No invitation links created yet</p>
+                                <small>Create invitation links to let others join your team</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Add via Google -->
+                <div id="googleAddSection" class="card mb-4 border-primary">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">
+                            <i class="bi bi-google text-danger me-2"></i>Quick Add with Google
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">Add team members who sign in with Google accounts</p>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Google Email</label>
+                                <input type="email" class="form-control" id="googleEmail" 
+                                       placeholder="user@gmail.com">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Role</label>
+                                <select class="form-select" id="googleUserRole">
+                                    <option value="viewer">Viewer</option>
+                                    <option value="member" selected>Member</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-danger" onclick="addGoogleUser()">
+                            <i class="bi bi-google me-1"></i>Add Google User
+                        </button>
+                        <small class="text-muted d-block mt-2">User will be added when they first sign in with Google</small>
+                    </div>
+                </div>
+
+                <!-- Manual Add Team Member -->
+                <div id="manualAddSection" class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Add Existing User</h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="addMemberForm">
+                            <div class="row mb-3">
+                                <div class="col-md-8">
+                                    <label class="form-label">Search User</label>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="userSearch" 
+                                               placeholder="Search by username, email, or name..." 
+                                               autocomplete="off">
+                                        <div id="userSearchResults" class="dropdown-menu w-100" style="max-height: 200px; overflow-y: auto;"></div>
+                                    </div>
+                                    <input type="hidden" id="selectedUserId">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Role</label>
+                                    <select class="form-select" id="memberRole">
+                                        <option value="viewer">Viewer</option>
+                                        <option value="member" selected>Member</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" onclick="addTeamMember()">
+                                <i class="bi bi-person-plus me-1"></i>Add Existing User
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Current Team Members -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Current Team Members</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="teamMembersContainer">
+                            <div class="text-center text-muted py-3">
+                                <i class="bi bi-people display-4"></i>
+                                <p>Loading team members...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Registration Modal -->
+<div class="modal fade" id="registerModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content clean-modal">
+            <div class="modal-header clean-modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-person-plus me-2"></i>Create Account
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body clean-modal-body">
+                <form id="registerForm">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" id="registerUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="registerEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="registerFullName">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="registerPassword" required>
+                    </div>
+                    <button type="button" class="btn btn-primary w-100" onclick="registerUser()">
+                        Create Account
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
@@ -241,7 +590,72 @@
   const ROADMAP_ID = JSON.parse('{{ roadmap_id|tojson|safe }}');
   // Roadmap name for display
   const ROADMAP_NAME = JSON.parse('{{ roadmap_name|tojson|safe }}');
+  // User role for permission checks
+  const USER_ROLE = '{{ user_role }}';
   console.log('Debug: ROADMAP_ID =', ROADMAP_ID);
+  console.log('Debug: USER_ROLE =', USER_ROLE);
+  
+  // Role hierarchy for permission checks
+  const ROLE_HIERARCHY = {
+    'owner': 4,
+    'admin': 3,
+    'member': 2,
+    'viewer': 1
+  };
+  
+  // Check if user has permission for a specific role level
+  function hasPermission(requiredRole) {
+    const userLevel = ROLE_HIERARCHY[USER_ROLE] || 0;
+    const requiredLevel = ROLE_HIERARCHY[requiredRole] || 0;
+    return userLevel >= requiredLevel;
+  }
+  
+  // Apply role-based UI restrictions
+  function applyRoleRestrictions() {
+    // Team button - only admin+ can access
+    if (!hasPermission('admin')) {
+      document.getElementById('teamButton').style.display = 'none';
+    }
+    
+    // Add Feature button - only member+ can access
+    if (!hasPermission('member')) {
+      document.getElementById('addFeatureButton').style.display = 'none';
+      // Also hide the empty state add feature button
+      const emptyStateBtn = document.querySelector('#emptyState .btn-primary');
+      if (emptyStateBtn) {
+        emptyStateBtn.style.display = 'none';
+      }
+    }
+    
+    // Share/Export - only member+ can access
+    if (!hasPermission('member')) {
+      document.getElementById('shareExportGroup').style.display = 'none';
+    }
+    
+    // Feature edit/delete buttons - only member+ can access
+    if (!hasPermission('member')) {
+      const deleteBtn = document.getElementById('deleteFeatureBtn');
+      const editBtn = document.getElementById('editFeatureBtn');
+      if (deleteBtn) deleteBtn.style.display = 'none';
+      if (editBtn) editBtn.style.display = 'none';
+    }
+    
+    // Team management sections - only admin+ can access
+    if (!hasPermission('admin')) {
+      const invitationSection = document.getElementById('invitationLinksSection');
+      const googleAddSection = document.getElementById('googleAddSection');
+      const manualAddSection = document.getElementById('manualAddSection');
+      
+      if (invitationSection) invitationSection.style.display = 'none';
+      if (googleAddSection) googleAddSection.style.display = 'none';
+      if (manualAddSection) manualAddSection.style.display = 'none';
+    }
+  }
+  
+  // Apply restrictions when page loads
+  document.addEventListener('DOMContentLoaded', function() {
+    applyRoleRestrictions();
+  });
 </script>
 <link rel="stylesheet" href="https://unpkg.com/frappe-gantt/dist/frappe-gantt.css">
 <script src="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.umd.js"></script>

@@ -1,11 +1,27 @@
-// Firebase Authentication
-const auth = firebase.auth();
+// Backend Authentication
 const loginBtn = document.getElementById('loginBtn');
 const navProject = document.getElementById('navProject');
 
-// Listen for auth state changes
-auth.onAuthStateChanged((user) => {
+// Check authentication status on page load
+async function checkAuthStatus() {
+    try {
+        const response = await fetch('/api/users/me');
+        if (response.ok) {
+            const user = await response.json();
+            updateAuthUI(user);
+        } else {
+            updateAuthUI(null);
+        }
+    } catch (error) {
+        console.log('Not authenticated');
+        updateAuthUI(null);
+    }
+}
+
+// Update UI based on authentication status
+function updateAuthUI(user) {
     if (!loginBtn) return;
+    
     if (navProject) {
         if (user) {
             navProject.classList.remove('d-none');
@@ -13,10 +29,27 @@ auth.onAuthStateChanged((user) => {
             navProject.classList.add('d-none');
         }
     }
+    
     if (user) {
-        // Show generic profile icon linking to profile page
-        loginBtn.innerHTML = '<img src="/static/img/default-profile.svg" class="rounded-circle" width="32" height="32" alt="Profile">';
-        loginBtn.setAttribute('href', '/profile');
+        // Show profile info
+        const avatar = user.avatar_url || '/static/img/default-profile.svg';
+        loginBtn.innerHTML = `
+            <div class="dropdown">
+                <a class="nav-link dropdown-toggle modern-nav-link p-1" href="#" role="button" data-bs-toggle="dropdown">
+                    <img src="${avatar}" class="rounded-circle" width="36" height="36" alt="Profile" style="border: 2px solid rgba(255,255,255,0.3);">
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end modern-dropdown">
+                    <li><a class="dropdown-item modern-dropdown-item" href="/profile">
+                        <i class="bi bi-person me-2"></i>Profile
+                    </a></li>
+                    <li><hr class="dropdown-divider my-2"></li>
+                    <li><a class="dropdown-item modern-dropdown-item" href="#" onclick="logout()">
+                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </a></li>
+                </ul>
+            </div>
+        `;
+        loginBtn.removeAttribute('href');
         loginBtn.onclick = null;
     } else {
         // Show login link
@@ -24,23 +57,28 @@ auth.onAuthStateChanged((user) => {
         loginBtn.setAttribute('href', '/login');
         loginBtn.onclick = null;
     }
-});
+}
 
-// Google Sign-in
+// Logout function
+async function logout() {
+    try {
+        await fetch('/api/users/logout', { method: 'POST' });
+        window.location.href = '/';
+    } catch (error) {
+        console.error('Logout error:', error);
+        // Force redirect even if logout fails
+        window.location.href = '/';
+    }
+}
+
+// Make logout function globally available
+window.logout = logout;
+
+// Check auth status when page loads
+document.addEventListener('DOMContentLoaded', checkAuthStatus);
+
+// Legacy Google Sign-in function (for compatibility)
 function signInWithGoogle() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    auth.signInWithPopup(provider)
-        .then((result) => result.user.getIdToken())
-        .then((token) => fetch('/api/verify-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token }),
-        }))
-        .then((response) => response.json())
-        .then((data) => {
-            if (data.error) {
-                console.error('Error:', data.error);
-            }
-        })
-        .catch((error) => console.error('Error:', error));
+    // Redirect to login page for Google sign-in
+    window.location.href = '/login';
 } 

@@ -1,37 +1,719 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1>Roadmaps</h1>
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoadmapModal">Add Roadmap</button>
-</div>
-<div id="roadmap-list" class="row gy-3">
-  <!-- Roadmap cards will be populated here -->
+<div class="roadmaps-page">
+    <!-- Header Section -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">My Roadmaps</h1>
+                <p class="text-muted mb-0">Manage and organize your product roadmaps</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-outline-secondary me-2" data-bs-toggle="modal" data-bs-target="#importRoadmapModal">
+                    <i class="bi bi-upload me-2"></i>Import
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoadmapModal">
+                    <i class="bi bi-plus-circle me-2"></i>Create Roadmap
+                </button>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary">
+                        <i class="bi bi-map"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalRoadmaps" class="stat-number">0</h3>
+                        <p class="stat-label">Total Roadmaps</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="activeRoadmaps" class="stat-number">0</h3>
+                        <p class="stat-label">Active Projects</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-info">
+                        <i class="bi bi-people"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="teamRoadmaps" class="stat-number">0</h3>
+                        <p class="stat-label">Team Projects</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning">
+                        <i class="bi bi-star"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="ownedRoadmaps" class="stat-number">0</h3>
+                        <p class="stat-label">Owned by Me</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="filters-section">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="bi bi-search search-icon"></i>
+                        <input type="text" id="searchInput" class="form-control search-input" placeholder="Search roadmaps...">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex gap-2 justify-content-md-end">
+                        <select id="filterSelect" class="form-select filter-select">
+                            <option value="all">All Roadmaps</option>
+                            <option value="owned">Owned by Me</option>
+                            <option value="member">Team Member</option>
+                            <option value="recent">Recently Updated</option>
+                        </select>
+                        <select id="sortSelect" class="form-select filter-select">
+                            <option value="name">Sort by Name</option>
+                            <option value="created">Created Date</option>
+                            <option value="updated">Last Updated</option>
+                        </select>
+                        <button class="btn btn-outline-secondary" id="viewToggle" title="Toggle View">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-3 text-muted">Loading your roadmaps...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="empty-state text-center py-5 d-none">
+        <div class="empty-icon">
+            <i class="bi bi-map display-1 text-muted"></i>
+        </div>
+        <h3 class="mt-3">No Roadmaps Yet</h3>
+        <p class="text-muted mb-4">Create your first roadmap to start planning your product journey</p>
+        <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#addRoadmapModal">
+            <i class="bi bi-plus-circle me-2"></i>Create Your First Roadmap
+        </button>
+    </div>
+
+    <!-- Roadmaps Grid -->
+    <div id="roadmapGrid" class="roadmap-grid">
+        <!-- Roadmap cards will be populated here -->
+    </div>
+
+    <!-- Roadmaps List View -->
+    <div id="roadmapList" class="roadmap-list d-none">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Role</th>
+                        <th>Last Updated</th>
+                        <th>Features</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="roadmapTableBody">
+                    <!-- Table rows will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
-<!-- Add Roadmap Modal -->
-<div class="modal fade" id="addRoadmapModal" tabindex="-1" aria-labelledby="addRoadmapModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="addRoadmapModalLabel">New Roadmap</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <label for="roadmapName" class="form-label">Roadmap Name</label>
-          <input type="text" class="form-control" id="roadmapName" placeholder="Enter roadmap name" />
+<!-- Create Roadmap Modal -->
+<div class="modal fade" id="addRoadmapModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modern-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-plus-circle me-2 text-primary"></i>Create New Roadmap
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="roadmapForm">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label for="roadmapName" class="form-label fw-semibold">Roadmap Name *</label>
+                            <input type="text" class="form-control modern-input" id="roadmapName" 
+                                   placeholder="e.g., Q4 Product Launch, Mobile App Roadmap" required>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="roadmapDescription" class="form-label fw-semibold">Description</label>
+                            <textarea class="form-control modern-input" id="roadmapDescription" rows="3" 
+                                      placeholder="Brief description of your roadmap goals and objectives"></textarea>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="roadmapTemplate" class="form-label fw-semibold">Template</label>
+                            <select class="form-select modern-input" id="roadmapTemplate">
+                                <option value="blank">Blank Roadmap</option>
+                                <option value="product">Product Launch</option>
+                                <option value="feature">Feature Development</option>
+                                <option value="sprint">Sprint Planning</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="roadmapVisibility" class="form-label fw-semibold">Visibility</label>
+                            <select class="form-select modern-input" id="roadmapVisibility">
+                                <option value="private">Private (Only Me)</option>
+                                <option value="team">Team Access</option>
+                                <option value="public">Public View</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveRoadmap">
+                    <i class="bi bi-check-lg me-1"></i>Create Roadmap
+                </button>
+            </div>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="saveRoadmap">Save Roadmap</button>
-      </div>
     </div>
-  </div>
 </div>
+
+<!-- Import Roadmap Modal -->
+<div class="modal fade" id="importRoadmapModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modern-modal">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-upload me-2 text-success"></i>Import Roadmap
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="importRoadmapForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <!-- Roadmap Details -->
+                    <div class="mb-3">
+                        <label for="importRoadmapName" class="form-label fw-semibold">Roadmap Name</label>
+                        <input type="text" class="form-control modern-input" id="importRoadmapName" name="name" placeholder="Enter roadmap name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="importRoadmapDescription" class="form-label fw-semibold">Description</label>
+                        <textarea class="form-control modern-input" id="importRoadmapDescription" name="description" rows="3" placeholder="Enter roadmap description"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="importRoadmapPublic" name="is_public">
+                            <label class="form-check-label" for="importRoadmapPublic">
+                                Make this roadmap public
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- File Upload Area -->
+                    <div class="upload-area text-center p-4 border rounded" style="border-style: dashed !important;">
+                        <i class="bi bi-cloud-upload display-4 text-muted mb-3"></i>
+                        <h6>Drop your file here or click to browse</h6>
+                        <p class="text-muted small mb-3">Supports CSV, JSON files</p>
+                        <input type="file" class="form-control" id="importFile" name="file" accept=".csv,.json" style="display: none;" required>
+                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('importFile').click()">
+                            Choose File
+                        </button>
+                        <div id="selectedFileName" class="mt-2 text-success" style="display: none;">
+                            <i class="bi bi-file-earmark-check me-1"></i>
+                            <span></span>
+                        </div>
+                    </div>
+                    
+                    <!-- File Format Help -->
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <strong>CSV Format:</strong> Title, Description, Priority, Status, Release, Date<br>
+                            <strong>JSON Format:</strong> Array of objects with title, description, priority, status, release, date fields
+                        </small>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div id="importProgress" class="mt-3" style="display: none;">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted mt-1">Importing roadmap...</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="importRoadmapBtn">
+                        <i class="bi bi-upload me-1"></i>Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.roadmaps-page {
+    padding: 1rem 0;
+}
+
+.page-header {
+    background: linear-gradient(135deg, rgba(0, 86, 210, 0.05), rgba(79, 70, 229, 0.05));
+    border-radius: 1rem;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
+}
+
+.stat-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    color: #1a1a1a;
+}
+
+.stat-label {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.filters-section {
+    background: white;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-top: 1.5rem;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7280;
+    z-index: 5;
+}
+
+.search-input {
+    padding-left: 2.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 210, 0.25);
+}
+
+.filter-select {
+    min-width: 150px;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+}
+
+.roadmap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.roadmap-card {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.roadmap-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.roadmap-header {
+    background: linear-gradient(135deg, var(--color-primary), #4f46e5);
+    color: white;
+    padding: 1.5rem;
+    position: relative;
+}
+
+.roadmap-role-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.roadmap-body {
+    padding: 1.5rem;
+}
+
+.roadmap-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.roadmap-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.empty-state {
+    background: white;
+    border-radius: 1rem;
+    padding: 3rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.empty-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, rgba(0, 86, 210, 0.1), rgba(79, 70, 229, 0.1));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.modern-modal {
+    border-radius: 1rem;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modern-input {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.modern-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(0, 86, 210, 0.25);
+}
+
+.upload-area {
+    border: 2px dashed #d1d5db;
+    border-radius: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: var(--color-primary);
+    background: rgba(0, 86, 210, 0.05);
+}
+
+@media (max-width: 768px) {
+    .page-header {
+        padding: 1.5rem;
+    }
+    
+    .roadmap-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .filters-section .row {
+        gap: 1rem;
+    }
+}
+</style>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/roadmaps.js') }}"></script>
-{% endblock %} 
+<script>
+// Import Roadmap Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const importForm = document.getElementById('importRoadmapForm');
+    const importFile = document.getElementById('importFile');
+    const selectedFileName = document.getElementById('selectedFileName');
+    const importProgress = document.getElementById('importProgress');
+    const importBtn = document.getElementById('importRoadmapBtn');
+    
+    // Check authentication before showing import modal
+    const importModalTrigger = document.querySelector('[data-bs-target="#importRoadmapModal"]');
+    if (importModalTrigger) {
+        importModalTrigger.addEventListener('click', async function(e) {
+            try {
+                const response = await fetch('/api/users/me');
+                if (!response.ok) {
+                    e.preventDefault();
+                    showError('Please log in to import roadmaps');
+                    setTimeout(() => window.location.href = '/login', 1500);
+                    return false;
+                }
+            } catch (error) {
+                e.preventDefault();
+                showError('Please log in to import roadmaps');
+                setTimeout(() => window.location.href = '/login', 1500);
+                return false;
+            }
+        });
+    }
+    
+    // Handle file selection
+    importFile.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            selectedFileName.style.display = 'block';
+            selectedFileName.querySelector('span').textContent = file.name;
+            
+            // Auto-fill roadmap name if not already filled
+            const nameInput = document.getElementById('importRoadmapName');
+            if (!nameInput.value) {
+                const fileName = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+                nameInput.value = fileName.charAt(0).toUpperCase() + fileName.slice(1);
+            }
+        } else {
+            selectedFileName.style.display = 'none';
+        }
+    });
+    
+    // Handle drag and drop
+    const uploadArea = document.querySelector('.upload-area');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight(e) {
+        uploadArea.style.borderColor = 'var(--color-primary)';
+        uploadArea.style.background = 'rgba(0, 86, 210, 0.05)';
+    }
+    
+    function unhighlight(e) {
+        uploadArea.style.borderColor = '#d1d5db';
+        uploadArea.style.background = '';
+    }
+    
+    uploadArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            importFile.files = files;
+            importFile.dispatchEvent(new Event('change'));
+        }
+    }
+    
+    // Handle form submission
+    importForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!importFile.files[0]) {
+            showError('Please select a file to import');
+            return;
+        }
+        
+        const formData = new FormData(importForm);
+        
+        // Show progress
+        importProgress.style.display = 'block';
+        importBtn.disabled = true;
+        importBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Importing...';
+        
+        try {
+            const response = await fetch('/api/roadmaps/import', {
+                method: 'POST',
+                body: formData
+            });
+            
+            // Check if response contains HTML (likely an error page)
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('text/html')) {
+                // Server returned HTML, likely an error page or redirect
+                if (response.status === 401 || response.url.includes('/login')) {
+                    throw new Error('Please log in to import roadmaps');
+                } else {
+                    throw new Error('Server error occurred. Please try again.');
+                }
+            }
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                // Success
+                showSuccess(`Roadmap imported successfully! Created "${result.roadmap.name}" with ${result.features_imported} features.`);
+                
+                // Close modal and refresh page
+                const modal = bootstrap.Modal.getInstance(document.getElementById('importRoadmapModal'));
+                modal.hide();
+                
+                // Reset form
+                importForm.reset();
+                selectedFileName.style.display = 'none';
+                
+                // Refresh roadmaps list
+                if (typeof loadRoadmaps === 'function') {
+                    await loadRoadmaps();
+                    await loadStatistics();
+                } else {
+                    // Fallback: reload page
+                    setTimeout(() => window.location.reload(), 1000);
+                }
+                
+            } else {
+                throw new Error(result.error || 'Import failed');
+            }
+            
+        } catch (error) {
+            console.error('Import error:', error);
+            
+            // Handle specific error types
+            if (error.message.includes('log in')) {
+                showError('Please log in to import roadmaps. Redirecting to login page...');
+                setTimeout(() => window.location.href = '/login', 2000);
+            } else if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+                showError('Authentication required. Please log in and try again.');
+                setTimeout(() => window.location.href = '/login', 2000);
+            } else {
+                showError(error.message || 'Failed to import roadmap. Please check your file format and try again.');
+            }
+        } finally {
+            // Hide progress
+            importProgress.style.display = 'none';
+            importBtn.disabled = false;
+            importBtn.innerHTML = '<i class="bi bi-upload me-1"></i>Import';
+        }
+    });
+    
+    // Reset form when modal is closed
+    document.getElementById('importRoadmapModal').addEventListener('hidden.bs.modal', function() {
+        importForm.reset();
+        selectedFileName.style.display = 'none';
+        importProgress.style.display = 'none';
+        importBtn.disabled = false;
+        importBtn.innerHTML = '<i class="bi bi-upload me-1"></i>Import';
+        unhighlight();
+    });
+});
+
+// Utility functions for showing messages
+function showSuccess(message) {
+    // Create and show success toast/alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        <i class="bi bi-check-circle-fill me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+function showError(message) {
+    // Create and show error toast/alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remove after 7 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 7000);
+}
+</script>
+{% endblock %}

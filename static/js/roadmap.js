@@ -1,10 +1,11 @@
 // Timeline View Management
 class RoadmapManager {
-    constructor() {
+    constructor(isDemoMode = false) {
         this.currentView = 'month';
         this.features = [];
         this.selectedFeature = null;
         this.editingFeatureId = null;
+        this.isDemoMode = isDemoMode || (typeof isDemo !== 'undefined' && isDemo);
         // Navigation state for different views
         this.monthOffset = 0;  // Offset from current month
         this.quarterOffset = 0; // Offset from current quarter  
@@ -25,28 +26,44 @@ class RoadmapManager {
             });
         });
 
-        // Save feature button
-        document.getElementById('saveFeature').addEventListener('click', () => {
-            this.saveFeature();
-        });
+        // Save feature button (only if it exists - not in demo mode)
+        const saveFeatureBtn = document.getElementById('saveFeature');
+        if (saveFeatureBtn) {
+            saveFeatureBtn.addEventListener('click', () => {
+                this.saveFeature();
+            });
+        }
 
-        // Delete and edit buttons in detail modal
-        document.getElementById('deleteFeatureBtn').addEventListener('click', () => this.deleteFeature());
-        document.getElementById('editFeatureBtn').addEventListener('click', () => this.startEditFeature());
+        // Delete and edit buttons in detail modal (only if they exist - not in demo mode)
+        const deleteFeatureBtn = document.getElementById('deleteFeatureBtn');
+        if (deleteFeatureBtn) {
+            deleteFeatureBtn.addEventListener('click', () => this.deleteFeature());
+        }
+        
+        const editFeatureBtn = document.getElementById('editFeatureBtn');
+        if (editFeatureBtn) {
+            editFeatureBtn.addEventListener('click', () => this.startEditFeature());
+        }
 
-        // Add Feature Modal event listener to reset title when opening for adding
-        document.getElementById('addFeatureModal').addEventListener('show.bs.modal', (e) => {
-            // Only reset if we're not editing (editingFeatureId is null)
-            if (!this.editingFeatureId) {
-                document.querySelector('#addFeatureModal .modal-title').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Add New Feature';
-            }
-        });
+        // Add Feature Modal event listeners (only if modal exists - not in demo mode)
+        const addFeatureModal = document.getElementById('addFeatureModal');
+        if (addFeatureModal) {
+            addFeatureModal.addEventListener('show.bs.modal', (e) => {
+                // Only reset if we're not editing (editingFeatureId is null)
+                if (!this.editingFeatureId) {
+                    document.querySelector('#addFeatureModal .modal-title').innerHTML = '<i class="bi bi-plus-circle me-2"></i>Add New Feature';
+                }
+            });
 
-        // Reset form and editing state when modal is hidden
-        document.getElementById('addFeatureModal').addEventListener('hidden.bs.modal', () => {
-            document.getElementById('featureForm').reset();
-            this.editingFeatureId = null;
-        });
+            // Reset form and editing state when modal is hidden
+            addFeatureModal.addEventListener('hidden.bs.modal', () => {
+                const featureForm = document.getElementById('featureForm');
+                if (featureForm) {
+                    featureForm.reset();
+                }
+                this.editingFeatureId = null;
+            });
+        }
 
         // Initialize drag and drop
         this.initializeDragAndDrop();
@@ -223,6 +240,15 @@ class RoadmapManager {
     }
 
     initializeKanbanDragDrop(board, dataAttribute, updateFunction) {
+        // Only enable drag and drop for members and above
+        // In demo mode, disable drag and drop
+        if (this.isDemoMode) {
+            return; // Disable drag and drop in demo mode
+        }
+        if (typeof hasPermission === 'function' && !hasPermission('member')) {
+            return;
+        }
+        
         board.querySelectorAll('.kanban-list').forEach(list => {
             new Sortable(list, {
                 group: `${dataAttribute}-kanban`,
@@ -272,15 +298,30 @@ class RoadmapManager {
     }
 
     saveFeature() {
-        console.log('Debug: saving feature for roadmap', ROADMAP_ID);
-        const featureData = {
-            title: document.getElementById('featureTitle').value,
-            description: document.getElementById('featureDescription').value,
-            release: document.getElementById('featureRelease').value,
-            priority: document.getElementById('featurePriority').value,
-            status: document.getElementById('featureStatus').value,
-            date: document.getElementById('featureDate').value
-        };
+        // In demo mode, show demo message instead of saving
+        if (this.isDemoMode) {
+            if (typeof showDemoMessage === 'function') {
+                showDemoMessage();
+            } else {
+                alert('This is a demo. Sign up to create and edit features!');
+            }
+            return;
+        }
+
+        const title = document.getElementById('featureTitle').value;
+        const description = document.getElementById('featureDescription').value;
+        const priority = document.getElementById('featurePriority').value;
+        const status = document.getElementById('featureStatus').value;
+        const release = document.getElementById('featureRelease').value;
+        const date = document.getElementById('featureDate').value;
+
+        if (!title || !date) {
+            alert('Please fill in the required fields');
+            return;
+        }
+
+        const featureData = { title, description, priority, status, release, date };
+
         if (this.editingFeatureId) {
             // Update existing feature
             fetch(`/api/features/${this.editingFeatureId}`, {
@@ -288,18 +329,24 @@ class RoadmapManager {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(featureData)
             })
-            .then(res => res.json())
-            .then(updated => {
-                // Update local
-                const idx = this.features.findIndex(f => f.id === this.editingFeatureId);
-                this.features[idx] = updated;
-                this.setView(this.currentView); // Re-render current view
-                this.editingFeatureId = null;
-                // Close modal & reset form
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addFeatureModal'));
-                modal.hide();
-                document.getElementById('featureForm').reset();
-            }).catch(e => console.error('Error updating:', e));
+                .then(response => {
+                    if (response.ok) return response.json();
+                    throw new Error('Failed to update feature');
+                })
+                .then(updatedFeature => {
+                    // Update locally
+                    const index = this.features.findIndex(f => f.id === this.editingFeatureId);
+                    if (index !== -1) {
+                        this.features[index] = updatedFeature;
+                        this.setView(this.currentView); // Re-render current view
+                    }
+                    // Hide modal
+                    bootstrap.Modal.getInstance(document.getElementById('addFeatureModal')).hide();
+                })
+                .catch(e => {
+                    console.error('Error updating feature:', e);
+                    alert('Failed to update feature');
+                });
         } else {
             // Create new feature
             fetch(`/api/roadmaps/${ROADMAP_ID}/features`, {
@@ -307,21 +354,21 @@ class RoadmapManager {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(featureData)
             })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw new Error(err.error || 'Failed to save feature'); });
-                }
-                return response.json();
-            })
-            .then((newFeature) => {
-                this.features.push(newFeature);
-                this.setView(this.currentView); // Re-render current view
-                // Close modal and reset form
-                const modal = bootstrap.Modal.getInstance(document.getElementById('addFeatureModal'));
-                modal.hide();
-                document.getElementById('featureForm').reset();
-            })
-            .catch((error) => console.error('Error saving feature:', error));
+                .then(response => {
+                    if (response.ok) return response.json();
+                    throw new Error('Failed to create feature');
+                })
+                .then(newFeature => {
+                    // Add to local array
+                    this.features.push(newFeature);
+                    this.setView(this.currentView); // Re-render current view
+                    // Hide modal
+                    bootstrap.Modal.getInstance(document.getElementById('addFeatureModal')).hide();
+                })
+                .catch(e => {
+                    console.error('Error creating feature:', e);
+                    alert('Failed to create feature');
+                });
         }
     }
 
@@ -409,6 +456,15 @@ class RoadmapManager {
     }
 
     initializeDragAndDrop() {
+        // Only enable drag and drop for members and above
+        // In demo mode, disable drag and drop
+        if (this.isDemoMode) {
+            return; // Disable drag and drop in demo mode
+        }
+        if (typeof hasPermission === 'function' && !hasPermission('member')) {
+            return;
+        }
+        
         const contentContainer = document.querySelector('.timeline-content');
         new Sortable(contentContainer, {
             animation: 150,
@@ -427,6 +483,7 @@ class RoadmapManager {
     }
 
     async fetchFeatures() {
+        console.log('fetchFeatures called, isDemoMode:', this.isDemoMode);
         const loadingEl = document.getElementById('loadingState');
         const errorEl = document.getElementById('errorState');
         const emptyEl = document.getElementById('emptyState');
@@ -434,12 +491,38 @@ class RoadmapManager {
         const timelineEl = document.getElementById('timelineView');
         const kanbanEl = document.getElementById('kanban-board');
 
+        console.log('Elements found:', { loadingEl, errorEl, emptyEl, controlsEl, timelineEl, kanbanEl });
+
         try {
-            const response = await fetch(`/api/roadmaps/${ROADMAP_ID}/features`);
+            let response;
+            if (this.isDemoMode) {
+                console.log('Using demo API endpoint');
+                // Use demo API endpoint for demo mode
+                response = await fetch('/api/demo/roadmap');
+            } else {
+                console.log('Using regular API endpoint with ROADMAP_ID:', typeof ROADMAP_ID !== 'undefined' ? ROADMAP_ID : 'undefined');
+                // Use regular API endpoint for authenticated users
+                response = await fetch(`/api/roadmaps/${ROADMAP_ID}/features`);
+            }
+            
+            console.log('API response status:', response.status, response.ok);
+            
             if (!response.ok) {
                 throw new Error('Failed to fetch features');
             }
-            this.features = await response.json();
+            
+            const data = await response.json();
+            console.log('API data received:', data);
+            
+            if (this.isDemoMode) {
+                // Demo API returns { roadmap, features }
+                this.features = data.features;
+            } else {
+                // Regular API returns features array directly
+                this.features = data;
+            }
+
+            console.log('Features loaded:', this.features.length);
 
             // Hide loading spinner
             loadingEl.classList.add('d-none');
@@ -447,9 +530,11 @@ class RoadmapManager {
             if (this.features.length === 0) {
                 // Show empty state if no features
                 emptyEl.classList.remove('d-none');
+                console.log('Showing empty state');
             } else {
                 // Show controls
                 controlsEl.classList.remove('d-none');
+                console.log('Showing main content area');
                 // Show initial view - all views except gantt use kanban board now
                 if (this.currentView === 'gantt') {
                     timelineEl.classList.add('d-none');
@@ -460,9 +545,10 @@ class RoadmapManager {
                     kanbanEl.classList.remove('d-none');
                 }
                 // Initialize the appropriate view
+                console.log('Initializing view:', this.currentView);
                 switch(this.currentView) {
                     case 'kanban':
-                        this.renderKanban();
+                    this.renderKanban();
                         break;
                     case 'month':
                         this.renderMonthAsKanban();
@@ -489,6 +575,16 @@ class RoadmapManager {
     }
 
     deleteFeature() {
+        // In demo mode, show demo message instead of deleting
+        if (this.isDemoMode) {
+            if (typeof showDemoMessage === 'function') {
+                showDemoMessage();
+            } else {
+                alert('This is a demo. Sign up to create and edit features!');
+            }
+            return;
+        }
+
         const id = this.selectedFeature.id;
         fetch(`/api/features/${id}`, { method: 'DELETE' })
             .then(response => {
@@ -635,33 +731,34 @@ class RoadmapManager {
         });
         
         // Initialize enhanced drag-and-drop for Kanban
+        if (!this.isDemoMode && typeof hasPermission === 'function' && hasPermission('member')) {
         board.querySelectorAll('.kanban-list').forEach(list => {
             new Sortable(list, {
                 group: 'kanban',
-                animation: 200,
-                ghostClass: 'kanban-ghost',
-                chosenClass: 'kanban-chosen',
-                dragClass: 'kanban-drag',
-                onStart: (evt) => {
-                    // Add visual feedback when dragging starts
-                    board.querySelectorAll('.kanban-list').forEach(l => {
-                        l.style.borderColor = '#0056D2';
-                        l.style.borderStyle = 'dashed';
-                        l.style.backgroundColor = 'rgba(0,86,210,0.05)';
-                    });
-                },
-                onEnd: (evt) => {
-                    // Remove visual feedback when dragging ends
-                    board.querySelectorAll('.kanban-list').forEach(l => {
-                        l.style.borderColor = 'transparent';
-                        l.style.backgroundColor = 'rgba(255,255,255,0.3)';
-                    });
-                },
+                    animation: 200,
+                    ghostClass: 'kanban-ghost',
+                    chosenClass: 'kanban-chosen',
+                    dragClass: 'kanban-drag',
+                    onStart: (evt) => {
+                        // Add visual feedback when dragging starts
+                        board.querySelectorAll('.kanban-list').forEach(l => {
+                            l.style.borderColor = '#0056D2';
+                            l.style.borderStyle = 'dashed';
+                            l.style.backgroundColor = 'rgba(0,86,210,0.05)';
+                        });
+                    },
+                    onEnd: (evt) => {
+                        // Remove visual feedback when dragging ends
+                        board.querySelectorAll('.kanban-list').forEach(l => {
+                            l.style.borderColor = 'transparent';
+                            l.style.backgroundColor = 'rgba(255,255,255,0.3)';
+                        });
+                    },
                 onAdd: (evt) => {
                     const itemEl = evt.item;
                     const newStatus = itemEl.closest('.kanban-column').dataset.status;
                     const id = parseInt(itemEl.dataset.id);
-                    
+                        
                     fetch(`/api/features/${id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -671,17 +768,18 @@ class RoadmapManager {
                     .then(updated => {
                         const idx = this.features.findIndex(f => f.id === updated.id);
                         this.features[idx].status = updated.status;
-                        
-                        // Update counts
-                        statuses.forEach(status => {
-                            const count = this.features.filter(f => f.status === status.key).length;
-                            const countEl = board.querySelector(`.kanban-column[data-status="${status.key}"] .kanban-count`);
-                            if (countEl) countEl.textContent = count;
-                        });
+                            
+                            // Update counts
+                            statuses.forEach(status => {
+                                const count = this.features.filter(f => f.status === status.key).length;
+                                const countEl = board.querySelector(`.kanban-column[data-status="${status.key}"] .kanban-count`);
+                                if (countEl) countEl.textContent = count;
+                            });
                     }).catch(e => console.error('Error updating status:', e));
                 }
             });
         });
+        }
     }
 
     renderMonthAsKanban() {
@@ -829,63 +927,65 @@ class RoadmapManager {
         });
         
         // Initialize enhanced drag-and-drop for Month Kanban
-        board.querySelectorAll('.kanban-list').forEach(list => {
-            new Sortable(list, {
-                group: 'month-kanban',
-                animation: 200,
-                ghostClass: 'kanban-ghost',
-                chosenClass: 'kanban-chosen',
-                dragClass: 'kanban-drag',
-                onStart: (evt) => {
-                    // Add visual feedback when dragging starts
-                    board.querySelectorAll('.kanban-list').forEach(l => {
-                        l.style.borderColor = '#6366f1';
-                        l.style.borderStyle = 'dashed';
-                        l.style.backgroundColor = 'rgba(99,102,241,0.05)';
-                    });
-                },
-                onEnd: (evt) => {
-                    // Remove visual feedback when dragging ends
-                    board.querySelectorAll('.kanban-list').forEach(l => {
-                        l.style.borderColor = 'transparent';
-                        l.style.backgroundColor = 'rgba(255,255,255,0.3)';
-                    });
-                },
-                onAdd: (evt) => {
-                    const itemEl = evt.item;
-                    const newMonth = itemEl.closest('.kanban-column').dataset.month;
-                    const id = parseInt(itemEl.dataset.id);
-                    
-                    // Calculate new date based on the target month
-                    const [monthName, year] = newMonth.split(' ');
-                    const monthIdx = new Date(Date.parse(monthName + ' 1, 2000')).getMonth();
-                    const newDate = new Date(parseInt(year), monthIdx, 15); // 15th of the month
-                    
-                    fetch(`/api/features/${id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ date: newDate.toISOString().split('T')[0] })
-                    })
-                    .then(res => res.json())
-                    .then(updated => {
-                        const idx = this.features.findIndex(f => f.id === updated.id);
-                        this.features[idx].date = updated.date;
-                        
-                        // Update counts for all months
-                        months.forEach(month => {
-                            const monthRef = monthRefs.find(ref => ref.month === month);
-                            const count = monthRef ? this.features.filter(f => {
-                                const featureDate = this.parseDate(f.date);
-                                return featureDate.getFullYear() === monthRef.date.getFullYear() && 
-                                       featureDate.getMonth() === monthRef.date.getMonth();
-                            }).length : 0;
-                            const countEl = board.querySelector(`.kanban-column[data-month="${month}"] .kanban-count`);
-                            if (countEl) countEl.textContent = count;
+        if (!this.isDemoMode && typeof hasPermission === 'function' && hasPermission('member')) {
+            board.querySelectorAll('.kanban-list').forEach(list => {
+                new Sortable(list, {
+                    group: 'month-kanban',
+                    animation: 200,
+                    ghostClass: 'kanban-ghost',
+                    chosenClass: 'kanban-chosen',
+                    dragClass: 'kanban-drag',
+                    onStart: (evt) => {
+                        // Add visual feedback when dragging starts
+                        board.querySelectorAll('.kanban-list').forEach(l => {
+                            l.style.borderColor = '#6366f1';
+                            l.style.borderStyle = 'dashed';
+                            l.style.backgroundColor = 'rgba(99,102,241,0.05)';
                         });
-                    }).catch(e => console.error('Error updating feature date:', e));
-                }
+                    },
+                    onEnd: (evt) => {
+                        // Remove visual feedback when dragging ends
+                        board.querySelectorAll('.kanban-list').forEach(l => {
+                            l.style.borderColor = 'transparent';
+                            l.style.backgroundColor = 'rgba(255,255,255,0.3)';
+                        });
+                    },
+                    onAdd: (evt) => {
+                        const itemEl = evt.item;
+                        const newMonth = itemEl.closest('.kanban-column').dataset.month;
+                        const id = parseInt(itemEl.dataset.id);
+                        
+                        // Calculate new date based on the target month
+                        const [monthName, year] = newMonth.split(' ');
+                        const monthIdx = new Date(Date.parse(monthName + ' 1, 2000')).getMonth();
+                        const newDate = new Date(parseInt(year), monthIdx, 15); // 15th of the month
+                        
+                        fetch(`/api/features/${id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ date: newDate.toISOString().split('T')[0] })
+                        })
+                        .then(res => res.json())
+                        .then(updated => {
+                            const idx = this.features.findIndex(f => f.id === updated.id);
+                            this.features[idx].date = updated.date;
+                            
+                            // Update counts for all months
+                            months.forEach(month => {
+                                const monthRef = monthRefs.find(ref => ref.month === month);
+                                const count = monthRef ? this.features.filter(f => {
+                                    const featureDate = this.parseDate(f.date);
+                                    return featureDate.getFullYear() === monthRef.date.getFullYear() && 
+                                           featureDate.getMonth() === monthRef.date.getMonth();
+                                }).length : 0;
+                                const countEl = board.querySelector(`.kanban-column[data-month="${month}"] .kanban-count`);
+                                if (countEl) countEl.textContent = count;
+                            });
+                        }).catch(e => console.error('Error updating feature date:', e));
+                    }
+                });
             });
-        });
+        }
     }
 
     addNavigationControls(board, viewType) {
@@ -1777,6 +1877,12 @@ class RoadmapManager {
     async renderGantt() {
         const ganttEl = document.getElementById('ganttChart');
         console.log('🎯 renderGantt called. Features count:', this.features.length);
+        
+        // In demo mode, create actual Gantt chart with demo data
+        if (this.isDemoMode) {
+            console.log('🎯 Demo mode: Creating real Gantt chart with demo data');
+            // Continue with normal Gantt creation but with demo data
+        }
         
         // Clean up any existing instance
         if (this.ganttInstance) {
@@ -2698,5 +2804,965 @@ class RoadmapManager {
 
 // Initialize the roadmap manager when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    window.roadmapManager = new RoadmapManager();
-}); 
+    const isDemoMode = typeof isDemo !== 'undefined' && isDemo;
+    window.roadmapManager = new RoadmapManager(isDemoMode);
+});
+
+// Global initialization function for demo mode
+function initializeRoadmap(demoMode = false) {
+    console.log('initializeRoadmap called with demoMode:', demoMode);
+    if (window.roadmapManager) {
+        console.log('RoadmapManager already exists, skipping initialization');
+        return; // Already initialized
+    }
+    console.log('Creating new RoadmapManager');
+    window.roadmapManager = new RoadmapManager(demoMode);
+} 
+
+// ============ SHARING & EXPORT FUNCTIONALITY ============
+
+// Global sharing functions
+let shareLinks = [];
+
+// Initialize sharing functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Load existing share links
+    loadShareLinks();
+    
+    // Setup share form event listeners
+    setupShareFormListeners();
+    
+    // Load analytics when modal opens
+    document.getElementById('analyticsModal').addEventListener('show.bs.modal', loadAnalytics);
+});
+
+function setupShareFormListeners() {
+    // Password protection toggle
+    document.getElementById('sharePasswordProtected').addEventListener('change', function() {
+        const passwordInput = document.getElementById('sharePassword');
+        if (this.checked) {
+            passwordInput.classList.remove('d-none');
+            passwordInput.required = true;
+        } else {
+            passwordInput.classList.add('d-none');
+            passwordInput.required = false;
+            passwordInput.value = '';
+        }
+    });
+    
+    // Expiration toggle
+    document.getElementById('shareExpires').addEventListener('change', function() {
+        const expiresInput = document.getElementById('shareExpiresAt');
+        if (this.checked) {
+            expiresInput.classList.remove('d-none');
+            expiresInput.required = true;
+            // Set default to 30 days from now
+            const defaultDate = new Date();
+            defaultDate.setDate(defaultDate.getDate() + 30);
+            expiresInput.value = defaultDate.toISOString().slice(0, 16);
+        } else {
+            expiresInput.classList.add('d-none');
+            expiresInput.required = false;
+            expiresInput.value = '';
+        }
+    });
+}
+
+async function createShareLink() {
+    const formData = {
+        title: document.getElementById('shareTitle').value,
+        description: document.getElementById('shareDescription').value,
+        access_level: document.getElementById('shareAccessLevel').value,
+        password_protected: document.getElementById('sharePasswordProtected').checked,
+        allow_embed: document.getElementById('shareAllowEmbed').checked,
+        created_by: 'current_user' // Would be dynamic in real app
+    };
+    
+    if (formData.password_protected) {
+        formData.password = document.getElementById('sharePassword').value;
+    }
+    
+    if (document.getElementById('shareExpires').checked) {
+        formData.expires_at = document.getElementById('shareExpiresAt').value;
+    }
+    
+    try {
+        const response = await fetch(`/api/roadmaps/${ROADMAP_ID}/share`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        if (response.ok) {
+            const shareLink = await response.json();
+            showSuccessMessage('Share link created successfully!');
+            
+            // Reset form
+            document.getElementById('shareForm').reset();
+            document.getElementById('sharePassword').classList.add('d-none');
+            document.getElementById('shareExpiresAt').classList.add('d-none');
+            
+            // Reload share links
+            loadShareLinks();
+        } else {
+            throw new Error('Failed to create share link');
+        }
+    } catch (error) {
+        console.error('Error creating share link:', error);
+        showErrorMessage('Failed to create share link. Please try again.');
+    }
+}
+
+async function loadShareLinks() {
+    try {
+        const response = await fetch(`/api/roadmaps/${ROADMAP_ID}/shares`);
+        if (response.ok) {
+            shareLinks = await response.json();
+            renderShareLinks();
+        }
+    } catch (error) {
+        console.error('Error loading share links:', error);
+    }
+}
+
+function renderShareLinks() {
+    const container = document.getElementById('shareLinksContainer');
+    
+    if (shareLinks.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-link-45deg display-4"></i>
+                <p>No share links created yet</p>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = shareLinks.map(link => `
+        <div class="card mb-3" data-link-id="${link.id}">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <h6 class="card-title mb-1">${link.title}</h6>
+                        <p class="card-text text-muted small mb-2">${link.description || 'No description'}</p>
+                        <div class="d-flex gap-2 mb-2">
+                            <span class="badge bg-primary">${link.access_level}</span>
+                            ${link.password_protected ? '<span class="badge bg-warning">Password Protected</span>' : ''}
+                            ${link.expires_at ? '<span class="badge bg-info">Expires</span>' : ''}
+                            <span class="badge bg-success">${link.view_count} views</span>
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="copyShareUrl('${link.share_url}')">
+                                <i class="bi bi-clipboard me-2"></i>Copy Link
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="copyEmbedCode('${link.embed_url}')">
+                                <i class="bi bi-code me-2"></i>Copy Embed Code
+                            </a></li>
+                            <li><a class="dropdown-item" href="${link.share_url}" target="_blank">
+                                <i class="bi bi-box-arrow-up-right me-2"></i>Open Link
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="viewLinkAnalytics(${link.id})">
+                                <i class="bi bi-graph-up me-2"></i>View Analytics
+                            </a></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteShareLink(${link.id})">
+                                <i class="bi bi-trash me-2"></i>Delete Link
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" value="${link.share_url}" readonly>
+                    <button class="btn btn-outline-secondary" onclick="copyShareUrl('${link.share_url}')">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function copyShareUrl(url) {
+    navigator.clipboard.writeText(url).then(() => {
+        showSuccessMessage('Share URL copied to clipboard!');
+    });
+}
+
+function copyEmbedCode(embedUrl) {
+    const embedCode = `<iframe src="${embedUrl}" width="100%" height="600" frameborder="0"></iframe>`;
+    navigator.clipboard.writeText(embedCode).then(() => {
+        showSuccessMessage('Embed code copied to clipboard!');
+    });
+}
+
+async function deleteShareLink(linkId) {
+    if (!confirm('Are you sure you want to delete this share link? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/shares/${linkId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showSuccessMessage('Share link deleted successfully!');
+            loadShareLinks();
+        } else {
+            throw new Error('Failed to delete share link');
+        }
+    } catch (error) {
+        console.error('Error deleting share link:', error);
+        showErrorMessage('Failed to delete share link. Please try again.');
+    }
+}
+
+async function viewLinkAnalytics(linkId) {
+    try {
+        const response = await fetch(`/api/shares/${linkId}/analytics`);
+        if (response.ok) {
+            const analytics = await response.json();
+            displayLinkAnalytics(analytics);
+        }
+    } catch (error) {
+        console.error('Error loading link analytics:', error);
+    }
+}
+
+function displayLinkAnalytics(analytics) {
+    const modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
+    const container = document.getElementById('shareAnalytics');
+    
+    container.innerHTML = `
+        <div class="row text-center mb-3">
+            <div class="col-4">
+                <div class="h4 text-primary">${analytics.total_views}</div>
+                <div class="small text-muted">Total Views</div>
+            </div>
+            <div class="col-4">
+                <div class="h4 text-success">${analytics.unique_visitors}</div>
+                <div class="small text-muted">Unique Visitors</div>
+            </div>
+            <div class="col-4">
+                <div class="h4 text-info">${Object.keys(analytics.countries).length}</div>
+                <div class="small text-muted">Countries</div>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <h6>Top Countries</h6>
+            ${Object.entries(analytics.countries)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5)
+                .map(([country, count]) => `
+                    <div class="d-flex justify-content-between">
+                        <span>${country}</span>
+                        <span class="badge bg-secondary">${count}</span>
+                    </div>
+                `).join('')}
+        </div>
+        
+        <div class="mb-3">
+            <h6>Recent Visits</h6>
+            <div class="small">
+                ${analytics.recent_visits.slice(0, 10).map(visit => `
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span>${new Date(visit.visited_at).toLocaleDateString()}</span>
+                        <span>${visit.country || 'Unknown'}</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    modal.show();
+}
+
+async function loadAnalytics() {
+    try {
+        const [shareResponse, exportResponse] = await Promise.all([
+            fetch(`/api/roadmaps/${ROADMAP_ID}/shares`),
+            fetch(`/api/roadmaps/${ROADMAP_ID}/exports`)
+        ]);
+        
+        if (shareResponse.ok && exportResponse.ok) {
+            const shares = await shareResponse.json();
+            const exports = await exportResponse.json();
+            
+            renderAnalyticsSummary(shares, exports);
+        }
+    } catch (error) {
+        console.error('Error loading analytics:', error);
+    }
+}
+
+function renderAnalyticsSummary(shares, exports) {
+    const shareContainer = document.getElementById('shareAnalytics');
+    const exportContainer = document.getElementById('exportHistory');
+    
+    if (shares.length > 0) {
+        const totalViews = shares.reduce((sum, link) => sum + (link.view_count || 0), 0);
+        shareContainer.innerHTML = `
+            <div class="row text-center mb-3">
+                <div class="col-6">
+                    <div class="h4 text-primary">${shares.length}</div>
+                    <div class="small text-muted">Active Links</div>
+                </div>
+                <div class="col-6">
+                    <div class="h4 text-success">${totalViews}</div>
+                    <div class="small text-muted">Total Views</div>
+                </div>
+            </div>
+            ${shares.map(link => `
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <div>
+                        <div class="fw-bold">${link.title}</div>
+                        <div class="small text-muted">${link.view_count} views</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewLinkAnalytics(${link.id})">
+                        Details
+                    </button>
+                </div>
+            `).join('')}
+        `;
+    }
+    
+    if (exports.length > 0) {
+        exportContainer.innerHTML = exports.map(exp => `
+            <div class="d-flex justify-content-between py-2 border-bottom">
+                <div>
+                    <div class="fw-bold">${exp.export_type.toUpperCase()}</div>
+                    <div class="small text-muted">${new Date(exp.created_at).toLocaleDateString()}</div>
+                </div>
+                <span class="badge bg-secondary">${exp.download_count} downloads</span>
+            </div>
+        `).join('');
+    }
+}
+
+// Export functions
+function exportCSV() {
+    const url = `/api/roadmaps/${ROADMAP_ID}/export/csv`;
+    window.open(url, '_blank');
+}
+
+
+
+// Utility functions for notifications
+function showSuccessMessage(message) {
+    // Create a simple toast notification
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed top-0 end-0 p-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="toast show" role="alert">
+            <div class="toast-header">
+                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                <strong class="me-auto">Success</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">${message}</div>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function showErrorMessage(message) {
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed top-0 end-0 p-3';
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <div class="toast show" role="alert">
+            <div class="toast-header">
+                <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">${message}</div>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 5000);
+}
+
+// ============ TEAM MANAGEMENT FUNCTIONS ============
+
+// Initialize team management when modal opens
+document.addEventListener('DOMContentLoaded', function() {
+    const teamModal = document.getElementById('teamModal');
+    if (teamModal) {
+        teamModal.addEventListener('shown.bs.modal', function() {
+            loadTeamMembers();
+            loadInvitationLinks();
+            setupUserSearch();
+        });
+    }
+});
+
+// Setup user search functionality
+function setupUserSearch() {
+    const searchInput = document.getElementById('userSearch');
+    const resultsContainer = document.getElementById('userSearchResults');
+    let searchTimeout;
+    
+    if (!searchInput || !resultsContainer) return;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 2) {
+            resultsContainer.classList.remove('show');
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            searchUsers(query);
+        }, 300);
+    });
+    
+    // Hide results when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.classList.remove('show');
+        }
+    });
+}
+
+// Search for users
+async function searchUsers(query) {
+    try {
+        const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+        const users = await response.json();
+        
+        const resultsContainer = document.getElementById('userSearchResults');
+        
+        if (users.length === 0) {
+            resultsContainer.innerHTML = `
+                <div class="dropdown-item-text text-muted">
+                    <i class="bi bi-person-x me-2"></i>No users found
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="showRegisterModal()">
+                            Create New User
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            resultsContainer.innerHTML = users.map(user => `
+                <button type="button" class="dropdown-item" onclick="selectUser(${user.id}, '${user.username}', '${user.full_name || ''}', '${user.email}')">
+                    <div class="d-flex align-items-center">
+                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                             style="width: 32px; height: 32px; color: white; font-size: 12px;">
+                            ${(user.full_name || user.username).charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <div class="fw-semibold">${user.full_name || user.username}</div>
+                            <div class="text-muted small">${user.email}</div>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
+        }
+        
+        resultsContainer.classList.add('show');
+    } catch (error) {
+        console.error('Error searching users:', error);
+        showErrorMessage('Failed to search users');
+    }
+}
+
+// Select a user from search results
+function selectUser(userId, username, fullName, email) {
+    document.getElementById('selectedUserId').value = userId;
+    document.getElementById('userSearch').value = fullName || username;
+    document.getElementById('userSearchResults').classList.remove('show');
+}
+
+// Show register modal
+function showRegisterModal() {
+    const teamModal = bootstrap.Modal.getInstance(document.getElementById('teamModal'));
+    teamModal.hide();
+    
+    const registerModal = new bootstrap.Modal(document.getElementById('registerModal'));
+    registerModal.show();
+}
+
+// Register new user
+async function registerUser() {
+    const username = document.getElementById('registerUsername').value.trim();
+    const email = document.getElementById('registerEmail').value.trim();
+    const fullName = document.getElementById('registerFullName').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    
+    if (!username || !email || !password) {
+        showErrorMessage('Please fill in all required fields');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, full_name: fullName, password })
+        });
+        
+        if (response.ok) {
+            const user = await response.json();
+            showSuccessMessage('User registered successfully!');
+            
+            // Close register modal and return to team modal
+            const registerModal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
+            registerModal.hide();
+            
+            const teamModal = new bootstrap.Modal(document.getElementById('teamModal'));
+            teamModal.show();
+            
+            // Pre-select the new user
+            selectUser(user.id, user.username, user.full_name, user.email);
+            
+            // Clear form
+            document.getElementById('registerForm').reset();
+        } else {
+            const error = await response.json();
+            showErrorMessage(error.error || 'Failed to register user');
+        }
+    } catch (error) {
+        console.error('Error registering user:', error);
+        showErrorMessage('Failed to register user');
+    }
+}
+
+// Add team member
+async function addTeamMember() {
+    const userId = document.getElementById('selectedUserId').value;
+    const role = document.getElementById('memberRole').value;
+    
+    if (!userId) {
+        showErrorMessage('Please select a user first');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/roadmaps/${ROADMAP_ID}/members`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_id: parseInt(userId), role })
+        });
+        
+        if (response.ok) {
+            showSuccessMessage('Team member added successfully!');
+            
+            // Clear form
+            document.getElementById('userSearch').value = '';
+            document.getElementById('selectedUserId').value = '';
+            document.getElementById('memberRole').value = 'member';
+            
+            // Reload team members
+            loadTeamMembers();
+        } else {
+            const error = await response.json();
+            showErrorMessage(error.error || 'Failed to add team member');
+        }
+    } catch (error) {
+        console.error('Error adding team member:', error);
+        showErrorMessage('Failed to add team member');
+    }
+}
+
+// Load team members
+async function loadTeamMembers() {
+    try {
+        const response = await fetch(`/api/roadmaps/${ROADMAP_ID}/members`);
+        const members = await response.json();
+        
+        renderTeamMembers(members);
+    } catch (error) {
+        console.error('Error loading team members:', error);
+        document.getElementById('teamMembersContainer').innerHTML = `
+            <div class="text-center text-danger py-3">
+                <i class="bi bi-exclamation-triangle display-4"></i>
+                <p>Failed to load team members</p>
+            </div>
+        `;
+    }
+}
+
+// Render team members
+function renderTeamMembers(members) {
+    const container = document.getElementById('teamMembersContainer');
+    
+    if (members.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-people display-4"></i>
+                <p>No team members yet</p>
+                <small>Add team members to collaborate on this roadmap</small>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = members.map(member => {
+        const user = member.user;
+        const roleColors = {
+            'owner': 'primary',
+            'admin': 'warning', 
+            'member': 'info',
+            'viewer': 'secondary'
+        };
+        
+        return `
+            <div class="member-item d-flex align-items-center justify-content-between p-3 border rounded mb-2">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                         style="width: 40px; height: 40px; color: white;">
+                        ${(user.full_name || user.username).charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <div class="fw-semibold">${user.full_name || user.username}</div>
+                        <div class="text-muted small">${user.email}</div>
+                        <div class="text-muted small">
+                            Joined: ${new Date(member.joined_at).toLocaleDateString()}
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-${roleColors[member.role] || 'secondary'}">${member.role}</span>
+                    ${hasPermission('admin') ? `
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                ${member.role !== 'owner' ? `
+                                    <li><a class="dropdown-item" href="#" onclick="changeUserRole('${member.id}', 'admin')">
+                                        <i class="bi bi-shield-check me-2"></i>Make Admin
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="changeUserRole('${member.id}', 'member')">
+                                        <i class="bi bi-person me-2"></i>Make Member
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="changeUserRole('${member.id}', 'viewer')">
+                                        <i class="bi bi-eye me-2"></i>Make Viewer
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="removeMember('${member.id}')">
+                                        <i class="bi bi-person-dash me-2"></i>Remove
+                                    </a></li>
+                                ` : `
+                                    <li><span class="dropdown-item-text text-muted">
+                                        <i class="bi bi-crown me-2"></i>Project Owner
+                                    </span></li>
+                                `}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Change user role
+async function changeUserRole(memberId, newRole) {
+    try {
+        const response = await fetch(`/api/roadmaps/${ROADMAP_ID}/members/${memberId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: newRole })
+        });
+        
+        if (response.ok) {
+            showSuccessMessage(`Role updated to ${newRole}`);
+            loadTeamMembers();
+        } else {
+            const error = await response.json();
+            showErrorMessage(error.error || 'Failed to update role');
+        }
+    } catch (error) {
+        console.error('Error updating role:', error);
+        showErrorMessage('Failed to update role');
+    }
+}
+
+// Remove member
+async function removeMember(memberId) {
+    if (!confirm('Are you sure you want to remove this team member?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/roadmaps/${ROADMAP_ID}/members/${memberId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            showSuccessMessage('Team member removed successfully');
+            loadTeamMembers();
+        } else {
+            const error = await response.json();
+            showErrorMessage(error.error || 'Failed to remove member');
+        }
+    } catch (error) {
+        console.error('Error removing member:', error);
+        showErrorMessage('Failed to remove member');
+    }
+}
+
+// Team Invitation Link Management
+
+function showCreateInvitationForm() {
+    document.getElementById('createInvitationForm').style.display = 'block';
+}
+
+function hideCreateInvitationForm() {
+    document.getElementById('createInvitationForm').style.display = 'none';
+    // Reset form
+    document.getElementById('invitationForm').reset();
+}
+
+async function createInvitationLink() {
+    const role = document.getElementById('invitationRole').value;
+    const expiresHours = document.getElementById('invitationExpires').value;
+    const maxUses = document.getElementById('invitationMaxUses').value;
+    
+    const data = {
+        role: role,
+        created_by: 1 // In real app, get from session
+    };
+    
+    if (expiresHours) {
+        data.expires_hours = parseInt(expiresHours);
+    }
+    
+    if (maxUses) {
+        data.max_uses = parseInt(maxUses);
+    }
+    
+    try {
+        const response = await fetch(`/api/roadmaps/${ROADMAP_ID}/invitations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to create invitation link');
+        }
+        
+        const invitation = await response.json();
+        showSuccessMessage('Invitation link created successfully!');
+        hideCreateInvitationForm();
+        loadInvitationLinks();
+        
+    } catch (error) {
+        showErrorMessage('Error creating invitation link: ' + error.message);
+    }
+}
+
+async function loadInvitationLinks() {
+    try {
+        const response = await fetch(`/api/roadmaps/${ROADMAP_ID}/invitations`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to load invitation links');
+        }
+        
+        const invitations = await response.json();
+        renderInvitationLinks(invitations);
+        
+    } catch (error) {
+        console.error('Error loading invitation links:', error);
+    }
+}
+
+function renderInvitationLinks(invitations) {
+    const container = document.getElementById('invitationLinksContainer');
+    
+    if (invitations.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-link-45deg display-4"></i>
+                <p>No invitation links created yet</p>
+                <small>Create invitation links to let others join your team</small>
+            </div>
+        `;
+        return;
+    }
+    
+    const html = invitations.map(invitation => {
+        const statusBadge = invitation.is_active ? 
+            '<span class="badge bg-success">Active</span>' :
+            invitation.is_expired ? 
+            '<span class="badge bg-warning">Expired</span>' :
+            '<span class="badge bg-secondary">Inactive</span>';
+        
+        const roleColor = invitation.role === 'admin' ? 'primary' : 
+                         invitation.role === 'member' ? 'info' : 'secondary';
+        
+        return `
+            <div class="border rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <span class="badge bg-${roleColor}">${invitation.role.toUpperCase()}</span>
+                        ${statusBadge}
+                        ${invitation.max_uses ? `<span class="badge bg-light text-dark">${invitation.current_uses}/${invitation.max_uses} uses</span>` : ''}
+                    </div>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deactivateInvitation(${invitation.id})">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                </div>
+                
+                <div class="input-group mb-2">
+                    <input type="text" class="form-control font-monospace small" 
+                           value="${invitation.invitation_url}" 
+                           readonly id="inviteUrl${invitation.id}">
+                    <button class="btn btn-outline-secondary" type="button" onclick="copyInvitationUrl(${invitation.id})">
+                        <i class="bi bi-clipboard"></i>
+                    </button>
+                </div>
+                
+                <small class="text-muted">
+                    Created ${new Date(invitation.created_at).toLocaleDateString()}
+                    ${invitation.expires_at ? ` • Expires ${new Date(invitation.expires_at).toLocaleDateString()}` : ' • No expiration'}
+                    ${invitation.creator ? ` • By ${invitation.creator.full_name || invitation.creator.username}` : ''}
+                </small>
+            </div>
+        `;
+    }).join('');
+    
+    container.innerHTML = html;
+}
+
+async function copyInvitationUrl(invitationId) {
+    const input = document.getElementById(`inviteUrl${invitationId}`);
+    
+    try {
+        await navigator.clipboard.writeText(input.value);
+        showSuccessMessage('Invitation link copied to clipboard!');
+    } catch (error) {
+        // Fallback for older browsers
+        input.select();
+        document.execCommand('copy');
+        showSuccessMessage('Invitation link copied to clipboard!');
+    }
+}
+
+async function deactivateInvitation(invitationId) {
+    if (!confirm('Are you sure you want to deactivate this invitation link?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/roadmaps/${ROADMAP_ID}/invitations/${invitationId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to deactivate invitation link');
+        }
+        
+        showSuccessMessage('Invitation link deactivated');
+        loadInvitationLinks();
+        
+    } catch (error) {
+        showErrorMessage('Error deactivating invitation link: ' + error.message);
+    }
+}
+
+// Google User Management
+
+async function addGoogleUser() {
+    const email = document.getElementById('googleEmail').value.trim();
+    const role = document.getElementById('googleUserRole').value;
+    
+    if (!email) {
+        showErrorMessage('Please enter a Google email address');
+        return;
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showErrorMessage('Please enter a valid email address');
+        return;
+    }
+    
+    try {
+        // Create a placeholder user that will be activated when they sign in with Google
+        const response = await fetch('/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: email.split('@')[0] + '_google',
+                email: email,
+                password: 'google_auth_placeholder', // Will be ignored for Google users
+                full_name: email.split('@')[0],
+                auth_provider: 'google'
+            })
+        });
+        
+        if (response.ok || response.status === 409) { // OK or user already exists
+            let user;
+            if (response.status === 409) {
+                // User already exists, find them
+                const searchResponse = await fetch(`/api/users/search?q=${encodeURIComponent(email)}`);
+                const users = await searchResponse.json();
+                user = users.find(u => u.email === email);
+                
+                if (!user) {
+                    throw new Error('User exists but could not be found');
+                }
+            } else {
+                user = await response.json();
+            }
+            
+            // Add user to team
+            const addResponse = await fetch(`/api/roadmaps/${ROADMAP_ID}/members`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: user.id, role })
+            });
+            
+            if (addResponse.ok) {
+                showSuccessMessage(`Google user ${email} added to team! They'll join when they sign in.`);
+                
+                // Clear form
+                document.getElementById('googleEmail').value = '';
+                document.getElementById('googleUserRole').value = 'member';
+                
+                // Reload team members
+                loadTeamMembers();
+            } else if (addResponse.status === 409) {
+                showErrorMessage('User is already a member of this team');
+            } else {
+                const error = await addResponse.json();
+                throw new Error(error.error || 'Failed to add user to team');
+            }
+        } else {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to create Google user');
+        }
+    } catch (error) {
+        console.error('Error adding Google user:', error);
+        showErrorMessage('Error adding Google user: ' + error.message);
+    }
+}

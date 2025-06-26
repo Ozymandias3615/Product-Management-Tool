@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ link.title }} - Embedded</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: {{ branding.get('primary_color', '#0056D2') }};
+            --secondary-color: {{ branding.get('secondary_color', '#4A90E2') }};
+        }
+        
+        body {
+            margin: 0;
+            padding: 10px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+        }
+        
+        .embed-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .embed-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .embed-description {
+            font-size: 0.9rem;
+            margin: 0.5rem 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .feature-card {
+            transition: transform 0.2s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .watermark {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-top: 1rem;
+            padding: 0.5rem;
+        }
+        
+        .watermark a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Embed Header -->
+    <div class="embed-header">
+        <div class="embed-title">{{ link.title }}</div>
+        {% if link.description %}
+        <div class="embed-description">{{ link.description }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Roadmap Content -->
+    <div id="kanban-board" class="row g-2">
+        <!-- Content will be loaded by JavaScript -->
+    </div>
+
+    <!-- Watermark -->
+    {% if not branding.get('hide_watermark') %}
+    <div class="watermark">
+        Powered by <a href="/" target="_blank">Product Compass</a>
+    </div>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        const shareToken = '{{ share_token }}';
+        let roadmapData = null;
+
+        async function loadRoadmapData() {
+            try {
+                const url = `/api/share/${shareToken}/data`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load roadmap data');
+                
+                roadmapData = await response.json();
+                renderRoadmap();
+            } catch (error) {
+                console.error('Error loading roadmap:', error);
+                document.getElementById('kanban-board').innerHTML = 
+                    '<div class="col-12"><div class="alert alert-warning">Unable to load roadmap data.</div></div>';
+            }
+        }
+
+        function renderRoadmap() {
+            if (!roadmapData) return;
+            
+            const kanbanBoard = document.getElementById('kanban-board');
+            kanbanBoard.innerHTML = '';
+            
+            // Compact month-based view for embedding
+            const today = new Date();
+            const columnsToShow = window.innerWidth < 768 ? 2 : 4; // Responsive columns
+            
+            for (let i = 0; i < columnsToShow; i++) {
+                const monthDate = new Date(today.getFullYear(), today.getMonth() + i, 1);
+                const monthName = monthDate.toLocaleDateString('en-US', { 
+                    month: window.innerWidth < 768 ? 'short' : 'long', 
+                    year: 'numeric' 
+                });
+                
+                const monthFeatures = roadmapData.features.filter(feature => {
+                    const featureDate = new Date(feature.date);
+                    return featureDate.getMonth() === monthDate.getMonth() && 
+                           featureDate.getFullYear() === monthDate.getFullYear();
+                });
+                
+                const column = document.createElement('div');
+                column.className = `col-${12/columnsToShow} mb-3`;
+                column.innerHTML = `
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-header text-white" style="background: var(--primary-color); padding: 0.5rem;">
+                            <h6 class="mb-0 text-center" style="font-size: 0.9rem;">${monthName}</h6>
+                            <small class="d-block text-center opacity-75">${monthFeatures.length} items</small>
+                        </div>
+                        <div class="card-body p-2" style="max-height: 300px; overflow-y: auto;">
+                            ${monthFeatures.length > 0 ? monthFeatures.map(feature => `
+                                <div class="feature-card mb-2 p-2 border rounded-2" style="font-size: 0.85rem;">
+                                    <div class="fw-bold text-truncate" title="${feature.title}">${feature.title}</div>
+                                    ${feature.description ? `<div class="text-muted small text-truncate" title="${feature.description}">${feature.description}</div>` : ''}
+                                    <div class="d-flex justify-content-between mt-1">
+                                        <span class="badge" style="background: ${getPriorityColor(feature.priority)}; font-size: 0.7rem;">${feature.priority || 'N/A'}</span>
+                                        <span class="badge" style="background: ${getStatusColor(feature.status)}; font-size: 0.7rem;">${feature.status || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            `).join('') : '<div class="text-muted text-center small">No features this month</div>'}
+                        </div>
+                    </div>
+                `;
+                
+                kanbanBoard.appendChild(column);
+            }
+        }
+
+        function getPriorityColor(priority) {
+            switch(priority?.toLowerCase()) {
+                case 'high': return '#dc3545';
+                case 'medium': return '#fd7e14';
+                case 'low': return '#198754';
+                default: return '#6c757d';
+            }
+        }
+
+        function getStatusColor(status) {
+            switch(status?.toLowerCase()) {
+                case 'completed': return '#198754';
+                case 'in-progress': return '#0d6efd';
+                case 'planned': return '#0dcaf0';
+                default: return '#6c757d';
+            }
+        }
+
+        // Responsive handling
+        window.addEventListener('resize', () => {
+            if (roadmapData) {
+                renderRoadmap();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', loadRoadmapData);
+    </script>
+</body>
+</html> 

@@ -18,46 +18,71 @@
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet" />
 </head>
 <body data-bs-spy="scroll" data-bs-target=".navbar" data-bs-offset="70" tabindex="0">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top modern-navbar">
         <div class="container">
-            <a class="navbar-brand d-flex align-items-center" href="/">
-                <img src="{{ url_for('static', filename='img/project.png') }}" alt="Product Compass" height="40" style="width:auto;">
+            <a class="navbar-brand modern-brand" href="/">
+                <img src="{{ url_for('static', filename='img/project.png') }}" alt="Product Compass" height="40">
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            
+            <button class="navbar-toggler border-0 p-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
+                <ul class="navbar-nav ms-auto me-3">
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="/">Home</a>
+                        <a class="nav-link modern-nav-link" href="/">
+                            <i class="bi bi-house me-1"></i>Home
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="/about">About Us</a>
+                        <a class="nav-link modern-nav-link" href="/about">
+                            <i class="bi bi-info-circle me-1"></i>About
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="/features">Features</a>
+                        <a class="nav-link modern-nav-link" href="/features">
+                            <i class="bi bi-star me-1"></i>Features
+                        </a>
                     </li>
                     <li id="navProject" class="nav-item dropdown d-none">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="projectDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Project
+                        <a class="nav-link dropdown-toggle modern-nav-link" href="#" id="projectDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-kanban me-1"></i>Projects
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="projectDropdown">
-                            <li><a class="dropdown-item" href="/projects/create">Create Project</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/roadmaps">Roadmaps</a></li>
-                            <li><a class="dropdown-item" href="/board">Scrum Board</a></li>
-                            <li><a class="dropdown-item" href="/gantt">Gantt Chart</a></li>
-                            <li><a class="dropdown-item" href="/personas">Personas</a></li>
-                            <li><a class="dropdown-item" href="/feedback">Feedback</a></li>
+                        <ul class="dropdown-menu modern-dropdown shadow-lg border-0" aria-labelledby="projectDropdown">
+                            <li><a class="dropdown-item modern-dropdown-item" href="/projects/create">
+                                <i class="bi bi-plus-circle me-2"></i>Create Project
+                            </a></li>
+                            <li><hr class="dropdown-divider my-2"></li>
+                            <li><a class="dropdown-item modern-dropdown-item" href="/roadmaps">
+                                <i class="bi bi-map me-2"></i>Roadmaps
+                            </a></li>
+                            <li><a class="dropdown-item modern-dropdown-item" href="/board">
+                                <i class="bi bi-kanban me-2"></i>Scrum Board
+                            </a></li>
+                            <li><a class="dropdown-item modern-dropdown-item" href="/gantt">
+                                <i class="bi bi-diagram-3 me-2"></i>Gantt Chart
+                            </a></li>
+                            <li><a class="dropdown-item modern-dropdown-item" href="/personas">
+                                <i class="bi bi-people me-2"></i>Personas
+                            </a></li>
+                            <li><a class="dropdown-item modern-dropdown-item" href="/feedback">
+                                <i class="bi bi-chat-dots me-2"></i>Feedback
+                            </a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link d-flex align-items-center" href="/contact">Contact Us</a>
-                    </li>
-                    <li class="nav-item" id="navAuth">
-                        <a href="/login" id="loginBtn" class="btn btn-outline-light d-flex align-items-center">Login</a>
+                        <a class="nav-link modern-nav-link" href="/contact">
+                            <i class="bi bi-envelope me-1"></i>Contact Us
+                        </a>
                     </li>
                 </ul>
+                
+                <div class="d-flex align-items-center" id="navAuth">
+                    <a href="/login" id="loginBtn" class="btn modern-login-btn">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Login
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
@@ -101,6 +126,44 @@
             delay: 0,
             easing: 'ease-in-out',
             disable: 'mobile'
+        });
+        
+        // Navbar dropdown animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdowns = document.querySelectorAll('.dropdown');
+            
+            dropdowns.forEach(dropdown => {
+                const dropdownMenu = dropdown.querySelector('.dropdown-menu');
+                const dropdownItems = dropdown.querySelectorAll('.dropdown-item');
+                
+                // Add item index for staggered animation
+                dropdownItems.forEach((item, index) => {
+                    item.style.setProperty('--item-index', index);
+                });
+                
+                dropdown.addEventListener('show.bs.dropdown', function() {
+                    // Reset animations
+                    dropdownItems.forEach(item => {
+                        item.style.animation = 'none';
+                        item.offsetHeight; // Trigger reflow
+                        item.style.animation = null;
+                    });
+                });
+                
+                dropdown.addEventListener('hide.bs.dropdown', function() {
+                    // Add hide animation
+                    dropdownMenu.style.transition = 'all 0.2s ease';
+                    dropdownMenu.style.opacity = '0';
+                    dropdownMenu.style.transform = 'translateY(-5px) scale(0.98)';
+                });
+                
+                dropdown.addEventListener('hidden.bs.dropdown', function() {
+                    // Reset styles after hiding
+                    dropdownMenu.style.transition = '';
+                    dropdownMenu.style.opacity = '';
+                    dropdownMenu.style.transform = '';
+                });
+            });
         });
     </script>
 </body>
