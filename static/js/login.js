@@ -49,7 +49,7 @@ form.addEventListener('submit', async (e) => {
   showLoading(true);
   
   try {
-    if (isSignup) {
+  if (isSignup) {
       // Register new user
       const registerResponse = await fetch('/api/users/register', {
         method: 'POST',
@@ -85,7 +85,7 @@ form.addEventListener('submit', async (e) => {
       // Redirect to roadmaps
       window.location.href = '/roadmaps';
       
-    } else {
+  } else {
       // Login existing user
       const loginResponse = await fetch('/api/users/login', {
         method: 'POST',
@@ -119,7 +119,7 @@ googleBtn.addEventListener('click', async () => {
   try {
     // Check if Firebase is available
     if (typeof firebase !== 'undefined' && firebase.auth) {
-      const provider = new firebase.auth.GoogleAuthProvider();
+  const provider = new firebase.auth.GoogleAuthProvider();
       const result = await firebase.auth().signInWithPopup(provider);
       const user = result.user;
       
@@ -132,7 +132,7 @@ googleBtn.addEventListener('click', async () => {
             email: user.email,
             full_name: user.displayName,
             google_id: user.uid,
-            avatar_url: user.photoURL
+            avatar_url: user.photoURL && user.photoURL.trim() !== '' ? user.photoURL : null
           }
         })
       });

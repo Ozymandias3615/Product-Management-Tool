@@ -91,59 +91,61 @@
 </section>
 
 <!-- Connect Section -->
-<section class="connect-section py-5 bg-light">
+<section class="connect-section-wrapper py-5">
     <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold mb-4">Let's Connect</h2>
-            <p class="lead text-muted">
-                Whether you have feedback, feature ideas, or just want to chat about product management, I'd love to hear from you!
-            </p>
-        </div>
-        
-        <div class="row g-4 justify-content-center">
-            <div class="col-lg-3 col-md-6">
-                <a href="/contact" class="connect-card d-block text-decoration-none">
-                    <div class="connect-card-inner text-center">
-                        <div class="connect-icon-wrapper mb-3">
-                            <i class="bi bi-envelope-heart connect-icon"></i>
-                        </div>
-                        <h5 class="connect-title">Send a Message</h5>
-                        <p class="connect-desc">Got feedback or questions? Drop me a line!</p>
-                    </div>
-                </a>
+        <div class="connect-section-inner">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold mb-4">Let's Connect</h2>
+                <p class="lead text-white-75">
+                    Whether you have feedback, feature ideas, or just want to chat about product management, I'd love to hear from you!
+                </p>
             </div>
-            <div class="col-lg-3 col-md-6">
-                <a href="/demo" class="connect-card d-block text-decoration-none">
-                    <div class="connect-card-inner text-center">
-                        <div class="connect-icon-wrapper mb-3">
-                            <i class="bi bi-play-circle connect-icon"></i>
+            
+            <div class="row g-4 justify-content-center">
+                <div class="col-lg-3 col-md-6">
+                    <a href="/contact" class="connect-card d-block text-decoration-none">
+                        <div class="connect-card-inner text-center">
+                            <div class="connect-icon-wrapper mb-3">
+                                <i class="bi bi-envelope-heart connect-icon"></i>
+                            </div>
+                            <h5 class="connect-title">Send a Message</h5>
+                            <p class="connect-desc">Got feedback or questions? Drop me a line!</p>
                         </div>
-                        <h5 class="connect-title">Try the Demo</h5>
-                        <p class="connect-desc">Experience Product Compass in action</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <a href="/about" class="connect-card d-block text-decoration-none">
-                    <div class="connect-card-inner text-center">
-                        <div class="connect-icon-wrapper mb-3">
-                            <i class="bi bi-info-circle connect-icon"></i>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <a href="/demo" class="connect-card d-block text-decoration-none">
+                        <div class="connect-card-inner text-center">
+                            <div class="connect-icon-wrapper mb-3">
+                                <i class="bi bi-play-circle connect-icon"></i>
+                            </div>
+                            <h5 class="connect-title">Try the Demo</h5>
+                            <p class="connect-desc">Experience Product Compass in action</p>
                         </div>
-                        <h5 class="connect-title">Learn More</h5>
-                        <p class="connect-desc">Discover the story behind the project</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-lg-3 col-md-6">
-                <a href="/register" class="connect-card d-block text-decoration-none">
-                    <div class="connect-card-inner text-center">
-                        <div class="connect-icon-wrapper mb-3">
-                            <i class="bi bi-rocket-takeoff connect-icon"></i>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <a href="/about" class="connect-card d-block text-decoration-none">
+                        <div class="connect-card-inner text-center">
+                            <div class="connect-icon-wrapper mb-3">
+                                <i class="bi bi-info-circle connect-icon"></i>
+                            </div>
+                            <h5 class="connect-title">Learn More</h5>
+                            <p class="connect-desc">Discover the story behind the project</p>
                         </div>
-                        <h5 class="connect-title">Get Started</h5>
-                        <p class="connect-desc">Join the Product Compass community</p>
-                    </div>
-                </a>
+                    </a>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <a href="/register" class="connect-card d-block text-decoration-none">
+                        <div class="connect-card-inner text-center">
+                            <div class="connect-icon-wrapper mb-3">
+                                <i class="bi bi-rocket-takeoff connect-icon"></i>
+                            </div>
+                            <h5 class="connect-title">Get Started</h5>
+                            <p class="connect-desc">Join the Product Compass community</p>
+                        </div>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -263,21 +265,40 @@
     line-height: 1.6;
 }
 
+.connect-section-wrapper {
+    background: transparent;
+}
+
+.connect-section-inner {
+    background: linear-gradient(135deg, #0056d2, #4f46e5) !important;
+    border-radius: 2rem;
+    padding: 4rem 3rem;
+    color: white;
+    box-shadow: 0 20px 60px rgba(0, 86, 210, 0.2);
+    margin: 2rem 0;
+}
+
+.text-white-75 {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
 .connect-card {
-    background: white;
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 1rem;
     padding: 2rem 1.5rem;
     transition: all 0.3s ease;
-    border: 1px solid #f1f1f1;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    color: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    color: white;
     height: 100%;
+    backdrop-filter: blur(10px);
 }
 
 .connect-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-    color: inherit;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
     text-decoration: none;
 }
 
@@ -292,24 +313,24 @@
 
 .connect-icon {
     font-size: 2.5rem;
-    color: #007bff;
+    color: #ffc107;
     transition: all 0.3s ease;
 }
 
 .connect-card:hover .connect-icon {
     transform: scale(1.1);
-    color: #0056b3;
+    color: #ffed4e;
 }
 
 .connect-title {
-    color: #2c3e50;
+    color: white;
     font-weight: 600;
     margin-bottom: 0.75rem;
     font-size: 1.1rem;
 }
 
 .connect-desc {
-    color: #6c757d;
+    color: white !important;
     font-size: 0.9rem;
     margin-bottom: 0;
     line-height: 1.5;
@@ -332,6 +353,12 @@
     
     .avatar-placeholder {
         font-size: 3rem;
+    }
+    
+    .connect-section-inner {
+        border-radius: 1.5rem;
+        padding: 3rem 2rem;
+        margin: 1rem 0;
     }
 }
 </style>

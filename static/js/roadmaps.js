@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const templateSelect = document.getElementById('roadmapTemplate');
     const visibilitySelect = document.getElementById('roadmapVisibility');
     const saveBtn = document.getElementById('saveRoadmap');
-    
+
     // Filter and search elements
     const searchInput = document.getElementById('searchInput');
     const filterSelect = document.getElementById('filterSelect');
@@ -174,8 +174,8 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Creating...';
             
             const response = await fetch('/api/roadmaps', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 
                     name, 
                     description,
@@ -596,14 +596,34 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         try {
+            console.log('Attempting to delete roadmap:', roadmapId);
+            
             const response = await fetch(`/api/roadmaps/${roadmapId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                credentials: 'same-origin',  // Ensure cookies are sent
+                headers: {
+                    'Content-Type': 'application/json'
+                }
             });
             
+            console.log('Delete response status:', response.status);
+            console.log('Delete response headers:', [...response.headers.entries()]);
+            
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to delete roadmap');
+                let errorMessage = 'Failed to delete roadmap';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.error || errorMessage;
+                    console.error('Delete error data:', errorData);
+                } catch (e) {
+                    console.error('Failed to parse error response:', e);
+                    errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                }
+                throw new Error(errorMessage);
             }
+            
+            const result = await response.json();
+            console.log('Delete successful:', result);
             
             // Reload roadmaps and statistics
             await loadRoadmaps();
@@ -822,4 +842,4 @@ document.addEventListener('DOMContentLoaded', () => {
             showError(error.message || 'Failed to duplicate roadmap');
         }
     }
-});
+}); 

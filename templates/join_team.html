@@ -243,7 +243,7 @@ async function handleGoogleSignIn(googleUser) {
                     email: googleUser.email,
                     full_name: googleUser.name,
                     google_id: googleUser.googleId,
-                    avatar_url: googleUser.avatar
+                    avatar_url: googleUser.avatar && googleUser.avatar.trim() !== '' ? googleUser.avatar : null
                 }
             })
         });

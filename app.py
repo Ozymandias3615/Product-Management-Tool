@@ -7,8 +7,11 @@ import json
 import csv
 import io
 import base64
+import requests
 from dotenv import load_dotenv
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from datetime import datetime, timedelta
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -19,7 +22,23 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
-app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+# Ensure secret key is set properly
+secret_key = os.getenv('SECRET_KEY')
+if not secret_key:
+    if os.getenv('FLASK_ENV') == 'production':
+        raise ValueError("SECRET_KEY environment variable must be set in production")
+    else:
+        secret_key = 'dev-secret-key-change-in-production'
+app.secret_key = secret_key
+
+# Security headers
+@app.after_request
+def add_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
 
 # Database configuration
 database_url = os.getenv('DATABASE_URL', 'sqlite:///roadmap.db')
@@ -30,8 +49,37 @@ if database_url and database_url.startswith('postgres://'):
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize SQLAlchemy
+# Mailgun configuration
+MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
+MAILGUN_DOMAIN = os.getenv('MAILGUN_DOMAIN')
+MAILGUN_BASE_URL = os.getenv('MAILGUN_BASE_URL', 'https://api.mailgun.net/v3')
+MAIL_FROM_ADDRESS = os.getenv('MAIL_FROM_ADDRESS', 'noreply@sandbox-123.mailgun.org')
+MAIL_FROM_NAME = os.getenv('MAIL_FROM_NAME', 'Product Compass')
+
+# Initialize extensions
 db = SQLAlchemy(app)
+
+# Initialize rate limiter
+limiter = Limiter(
+    app=app,
+    key_func=get_remote_address,
+    default_limits=["1000 per hour", "100 per minute"],
+    storage_uri="memory://",  # Use Redis in production: "redis://localhost:6379"
+)
+
+# Rate limit error handler
+@app.errorhandler(429)
+def rate_limit_handler(e):
+    if request.is_json or request.path.startswith('/api/'):
+        return jsonify({
+            'error': 'Rate limit exceeded',
+            'message': 'Too many requests. Please try again later.',
+            'retry_after': getattr(e, 'retry_after', None)
+        }), 429
+    else:
+        return render_template('error.html',
+                             error_title="Rate Limit Exceeded",
+                             error_message="Too many requests. Please wait a moment and try again."), 429
 
 # User model
 class User(db.Model):
@@ -67,6 +115,7 @@ class Roadmap(db.Model):
     shared_links = db.relationship('ShareableLink', backref='roadmap', lazy=True, cascade='all, delete-orphan')
     exports = db.relationship('ExportHistory', backref='roadmap', lazy=True, cascade='all, delete-orphan')
     members = db.relationship('ProjectMember', backref='roadmap', lazy=True, cascade='all, delete-orphan')
+    team_invitations = db.relationship('TeamInvitation', backref='roadmap', lazy=True, cascade='all, delete-orphan')
 
 # Project member model for multi-user collaboration
 class ProjectMember(db.Model):
@@ -96,7 +145,6 @@ class TeamInvitation(db.Model):
     is_active = db.Column(db.Boolean, default=True)
     
     # Relationships
-    roadmap = db.relationship('Roadmap', backref='team_invitations')
     creator = db.relationship('User', foreign_keys=[created_by])
 
 # Feature model (link to roadmap)
@@ -294,7 +342,62 @@ def feature_access_required(permission='view'):
 # Create database tables on startup
 def init_db():
     # Create tables if they don't exist (preserves existing data)
-    db.create_all()
+    with app.app_context():
+        db.create_all()
+
+# Helper function to send emails via Mailgun
+def send_mailgun_email(to_email, subject, html_content, text_content=None, reply_to=None):
+    """Send email using Mailgun API with enhanced deliverability"""
+    try:
+        if not MAILGUN_API_KEY or not MAILGUN_DOMAIN:
+            raise Exception("Mailgun API key or domain not configured")
+        
+        url = f"{MAILGUN_BASE_URL}/{MAILGUN_DOMAIN}/messages"
+        
+        # Enhanced data with anti-spam headers
+        data = {
+            'from': f"{MAIL_FROM_NAME} <{MAIL_FROM_ADDRESS}>",
+            'to': to_email,
+            'subject': subject,
+            'html': html_content,
+            # Anti-spam headers
+            'h:X-Mailgun-Tag': 'contact-form',
+            'h:X-Mailgun-Track': 'yes',
+            'h:X-Mailgun-Track-Opens': 'yes',
+            'h:List-Unsubscribe': f'<mailto:unsubscribe@{MAILGUN_DOMAIN.split(".", 1)[-1] if "." in MAILGUN_DOMAIN else MAILGUN_DOMAIN}>',
+            'h:X-Priority': '3',
+            'h:X-MSMail-Priority': 'Normal',
+            'h:Importance': 'Normal'
+        }
+        
+        # Add text version if provided
+        if text_content:
+            data['text'] = text_content
+        else:
+            # Generate basic text version from HTML
+            import re
+            text_version = re.sub('<[^<]+?>', '', html_content)
+            text_version = re.sub(r'\s+', ' ', text_version).strip()
+            data['text'] = text_version
+        
+        # Add reply-to if provided
+        if reply_to:
+            data['h:Reply-To'] = reply_to
+        
+        response = requests.post(
+            url,
+            auth=('api', MAILGUN_API_KEY),
+            data=data,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            return True, "Email sent successfully"
+        else:
+            return False, f"Mailgun API error: {response.status_code} - {response.text}"
+            
+    except Exception as e:
+        return False, f"Email sending failed: {str(e)}"
 
 # Helper function to track link visits
 def track_link_visit(link_id, request):
@@ -888,6 +991,7 @@ def delete_persona(persona_id):
 
 # API to register a new user
 @app.route('/api/users/register', methods=['POST'])
+@limiter.limit("3 per minute")  # Prevent spam registrations
 def register_user():
     data = request.json
     username = data.get('username')
@@ -923,6 +1027,7 @@ def register_user():
 
 # API to authenticate user
 @app.route('/api/users/login', methods=['POST'])
+@limiter.limit("5 per minute")  # Prevent brute force attacks
 def login_user():
     data = request.json
     username_or_email = data.get('username')
@@ -935,6 +1040,10 @@ def login_user():
         google_id = google_user.get('google_id')
         full_name = google_user.get('full_name')
         avatar_url = google_user.get('avatar_url')
+        
+        # Normalize avatar URL - treat empty strings as None
+        if avatar_url and avatar_url.strip() == '':
+            avatar_url = None
         
         if not email or not google_id:
             return jsonify({'error': 'Google email and ID are required'}), 400
@@ -951,7 +1060,8 @@ def login_user():
                 user.auth_provider = 'google'
             if not user.full_name and full_name:
                 user.full_name = full_name
-            if not user.avatar_url and avatar_url:
+            # Update avatar only if we have a valid URL and user doesn't have one
+            if avatar_url and not user.avatar_url:
                 user.avatar_url = avatar_url
             user.last_login = datetime.utcnow()
             db.session.commit()
@@ -970,7 +1080,7 @@ def login_user():
                 full_name=full_name or email.split('@')[0],
                 google_id=google_id,
                 auth_provider='google',
-                avatar_url=avatar_url,
+                avatar_url=avatar_url,  # This will be None if no valid avatar
                 last_login=datetime.utcnow()
             )
             
@@ -1465,6 +1575,7 @@ def join_team_page(invitation_token):
 
 # API to accept team invitation
 @app.route('/api/join/<invitation_token>', methods=['POST'])
+@limiter.limit("5 per minute")  # Prevent invitation abuse
 def accept_team_invitation(invitation_token):
     data = request.json
     user_data = data.get('user')  # User info if registering new user
@@ -1493,6 +1604,10 @@ def accept_team_invitation(invitation_token):
         google_id = google_user_data.get('google_id')
         avatar_url = google_user_data.get('avatar_url')
         
+        # Normalize avatar URL - treat empty strings as None
+        if avatar_url and avatar_url.strip() == '':
+            avatar_url = None
+        
         if not email or not google_id:
             return jsonify({'error': 'Google email and ID are required'}), 400
         
@@ -1508,7 +1623,8 @@ def accept_team_invitation(invitation_token):
                 user.auth_provider = 'google'
             if not user.full_name and full_name:
                 user.full_name = full_name
-            if not user.avatar_url and avatar_url:
+            # Update avatar only if we have a valid URL and user doesn't have one
+            if avatar_url and not user.avatar_url:
                 user.avatar_url = avatar_url
             user.last_login = datetime.utcnow()
             db.session.commit()
@@ -1812,6 +1928,154 @@ def team():
 def contact():
     return render_template('contact.html')
 
+# Contact form submission
+@app.route('/api/contact', methods=['POST'])
+@limiter.limit("2 per minute")  # Prevent contact form spam
+def submit_contact_form():
+    try:
+        data = request.json
+        name = data.get('name', '').strip()
+        email = data.get('email', '').strip()
+        subject = data.get('subject', '').strip()
+        message = data.get('message', '').strip()
+        
+        # Validate required fields
+        if not name or not email or not subject or not message:
+            return jsonify({'error': 'All fields are required'}), 400
+        
+        # Validate email format (basic check)
+        if '@' not in email or '.' not in email:
+            return jsonify({'error': 'Please provide a valid email address'}), 400
+        
+        # Email body for notification
+        notification_html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #0056d2, #4f46e5); color: white; padding: 2rem; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="margin: 0; font-size: 24px;">New Contact Form Submission</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">Product Compass Website</p>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <h2 style="color: #333; margin-top: 0;">Contact Details</h2>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #666;">Name:</td>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #333;">{name}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #666;">Email:</td>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #333;">
+                                <a href="mailto:{email}" style="color: #0056d2; text-decoration: none;">{email}</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #666;">Subject:</td>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #333;">{subject}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px 0; font-weight: bold; color: #666; vertical-align: top;">Message:</td>
+                            <td style="padding: 10px 0; color: #333;">
+                                <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #0056d2;">
+                                    {message.replace(chr(10), '<br>')}
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #ddd;">
+                    <p style="color: #666; font-size: 14px; margin: 0;">
+                        This message was sent from the Product Compass contact form.<br>
+                        <strong>Reply directly to {email} to respond to {name}.</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+        """
+        
+        # Send notification email to admin with improved headers
+        success1, error1 = send_mailgun_email(
+            to_email=os.getenv('CONTACT_EMAIL', 'n.abbiw10@gmail.com'),
+            subject=f"[Product Compass] New Contact: {subject}",
+            html_content=notification_html,
+            reply_to=email  # Set reply-to as the contact form submitter
+        )
+        
+        if not success1:
+            print(f"Error sending notification email: {error1}")
+            return jsonify({
+                'error': 'Sorry, there was an error sending your message. Please try again later.'
+            }), 500
+        
+        # Confirmation email for sender
+        confirmation_html = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #0056d2, #4f46e5); color: white; padding: 2rem; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="margin: 0; font-size: 24px;">Thank You!</h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9;">We've received your message</p>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 2rem; border-radius: 0 0 8px 8px;">
+                <div style="background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                    <p style="color: #333; font-size: 16px; line-height: 1.6; margin-top: 0;">
+                        Hi <strong>{name}</strong>,
+                    </p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">
+                        Thank you for reaching out to us! We've received your message about "<strong>{subject}</strong>" and 
+                        we'll get back to you as soon as possible, usually within 24 hours.
+                    </p>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">
+                        Here's a copy of your message for your records:
+                    </p>
+                    <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #0056d2; margin: 20px 0;">
+                        <p style="color: #555; margin: 0; font-style: italic;">
+                            "{message}"
+                        </p>
+                    </div>
+                    <p style="color: #333; font-size: 16px; line-height: 1.6;">
+                        In the meantime, feel free to explore our platform and create amazing product roadmaps!
+                    </p>
+                </div>
+                
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <a href="{request.host_url}" style="display: inline-block; background: #0056d2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                        Visit Product Compass
+                    </a>
+                </div>
+                
+                <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #ddd;">
+                    <p style="color: #666; font-size: 14px; margin: 0;">
+                        Best regards,<br>
+                        The Product Compass Team
+                    </p>
+                </div>
+            </div>
+        </div>
+        """
+        
+        # Send confirmation email to the sender
+        success2, error2 = send_mailgun_email(
+            to_email=email,
+            subject="Thank you for contacting Product Compass",
+            html_content=confirmation_html
+        )
+        
+        if not success2:
+            print(f"Error sending confirmation email: {error2}")
+            # Don't fail the request if confirmation email fails
+        
+        return jsonify({
+            'success': True,
+            'message': 'Thank you for your message! We\'ll get back to you soon.'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return jsonify({
+            'error': 'Sorry, there was an error sending your message. Please try again later.'
+        }), 500
+
 @app.route('/personas')
 def personas_view():
     return render_template('personas.html')
@@ -1876,6 +2140,7 @@ def embed_roadmap(share_token):
 
 # Password verification for protected links
 @app.route('/share/<share_token>/verify', methods=['POST'])
+@limiter.limit("10 per minute")  # Prevent password brute force
 def verify_share_password(share_token):
     link = ShareableLink.query.filter_by(share_token=share_token, is_active=True).first_or_404()
     password = request.form.get('password')
@@ -2015,15 +2280,30 @@ def get_roadmaps():
     roadmaps_data = []
     for r in all_roadmaps:
         feature_count = Feature.query.filter_by(roadmap_id=r.id).count()
+        
+        # Determine user's role
+        if r.owner_id == user.id:
+            role = 'Owner'
+        else:
+            member = ProjectMember.query.filter_by(
+                roadmap_id=r.id, 
+                user_id=user.id, 
+                status='active'
+            ).first()
+            role = member.role.title() if member else 'Viewer'
+        
         roadmaps_data.append({
             'id': r.id, 
             'name': r.name,
             'description': r.description,
             'is_owner': r.owner_id == user.id,
             'owner_id': r.owner_id,
+            'role': role,
             'created_at': r.created_at.isoformat(),
             'updated_at': r.updated_at.isoformat(),
+            'lastUpdated': r.updated_at.isoformat(),  # Add this for frontend compatibility
             'feature_count': feature_count,
+            'featureCount': feature_count,  # Add this for frontend compatibility
             'is_public': r.is_public
         })
     
@@ -2355,7 +2635,7 @@ def import_roadmap():
 
 # API to delete a roadmap
 @app.route('/api/roadmaps/<int:roadmap_id>', methods=['DELETE'])
-@roadmap_access_required('admin')
+@login_required
 def delete_roadmap(roadmap_id):
     try:
         user = get_current_user()
@@ -2384,6 +2664,69 @@ def delete_roadmap(roadmap_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Failed to delete roadmap: {str(e)}'}), 500
+
+# API to delete user account
+@app.route('/api/users/me', methods=['DELETE'])
+@login_required
+@limiter.limit("1 per hour")  # Prevent accidental multiple deletions
+def delete_current_user_account():
+    try:
+        user = get_current_user()
+        user_id = user.id
+        username = user.username
+        email = user.email
+        
+        # Delete in the correct order to avoid foreign key constraint issues
+        
+        # 1. Delete user activities first
+        UserActivity.query.filter_by(user_id=user.id).delete()
+        
+        # 2. Delete project memberships where user is a member
+        ProjectMember.query.filter_by(user_id=user.id).delete()
+        
+        # 3. Update project memberships where user invited others (set invited_by to NULL)
+        ProjectMember.query.filter_by(invited_by=user.id).update({'invited_by': None})
+        
+        # 4. Delete team invitations created by this user
+        TeamInvitation.query.filter_by(created_by=user.id).delete()
+        
+        # 5. Delete roadmaps owned by this user (this will cascade delete related features, shares, exports, etc.)
+        owned_roadmaps = Roadmap.query.filter_by(owner_id=user.id).all()
+        for roadmap in owned_roadmaps:
+            # Delete features for this roadmap
+            Feature.query.filter_by(roadmap_id=roadmap.id).delete()
+            # Delete shareable links for this roadmap
+            ShareableLink.query.filter_by(roadmap_id=roadmap.id).delete()
+            # Delete export history for this roadmap
+            ExportHistory.query.filter_by(roadmap_id=roadmap.id).delete()
+            # Delete team invitations for this roadmap
+            TeamInvitation.query.filter_by(roadmap_id=roadmap.id).delete()
+            # Delete project members for this roadmap
+            ProjectMember.query.filter_by(roadmap_id=roadmap.id).delete()
+            # Delete the roadmap itself
+            db.session.delete(roadmap)
+        
+        # 6. Finally delete the user account
+        db.session.delete(user)
+        
+        # Commit all changes
+        db.session.commit()
+        
+        # Clear session
+        session.clear()
+        
+        return jsonify({
+            'message': 'Account deleted successfully',
+            'deleted_user': {
+                'id': user_id,
+                'username': username,
+                'email': email
+            }
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to delete account: {str(e)}'}), 500
 
 # Test endpoint for authentication debugging
 @app.route('/api/test-auth', methods=['GET'])

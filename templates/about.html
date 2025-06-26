@@ -141,14 +141,14 @@
         <div class="row justify-content-center">
             <div class="col-lg-8" data-aos="fade-up">
                 <h2 class="display-5 fw-bold text-white mb-4">Ready to Transform Your Product Management?</h2>
-                <p class="lead mb-4" style="color: rgba(255, 255, 255, 0.9);">
+                <p class="lead mb-4" style="color: #ffc107;">
                     Join thousands of product teams already using Product Compass to build better products faster.
                 </p>
                 <div class="d-flex gap-3 justify-content-center flex-wrap">
                     <a href="/demo" class="btn btn-light btn-lg shadow">
                         <i class="bi bi-play-circle me-2"></i>Try Free Demo
                     </a>
-                    <a href="/login" class="btn btn-outline-light btn-lg">
+                    <a href="/login" class="btn btn-outline-light btn-lg" id="getStartedBtn">
                         <i class="bi bi-rocket me-2"></i>Get Started
                     </a>
                 </div>
@@ -244,35 +244,40 @@
     background: linear-gradient(135deg, #0056d2, #4f46e5) !important;
 }
 
+.cta-section .lead {
+    color: white !important;
+}
+
 .section-spacer {
     height: 4rem;
 }
 
 .btn-light {
-    background: white;
-    border: none;
-    color: #0056d2;
+    background: #ffc107 !important;
+    border: none !important;
+    color: #2c3e50 !important;
     font-weight: 600;
     transition: all 0.3s ease;
 }
 
 .btn-light:hover {
-    background: #f8f9fa;
+    background: #ffed4e !important;
     transform: translateY(-2px);
-    color: #0056d2;
+    color: #2c3e50 !important;
 }
 
 .btn-outline-light {
-    border: 2px solid rgba(255, 255, 255, 0.8);
-    color: white;
+    border: 2px solid #ffc107 !important;
+    color: #ffc107 !important;
+    background: transparent !important;
     font-weight: 600;
     transition: all 0.3s ease;
 }
 
 .btn-outline-light:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: white;
-    color: white;
+    background: rgba(255, 193, 7, 0.3) !important;
+    border-color: #ffc107 !important;
+    color: #ffc107 !important;
     transform: translateY(-2px);
 }
 
@@ -287,4 +292,34 @@
     }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is authenticated and update Get Started button
+    const getStartedBtn = document.getElementById('getStartedBtn');
+    
+    // Check authentication status by making a request to the API
+    fetch('/api/users/me', {
+        method: 'GET',
+        credentials: 'include'
+    })
+    .then(response => {
+        if (response.ok) {
+            // User is authenticated - redirect to roadmaps
+            getStartedBtn.href = '/roadmaps';
+            getStartedBtn.innerHTML = '<i class="bi bi-kanban me-2"></i>Go to My Roadmaps';
+        } else {
+            // User is not authenticated - keep login redirect
+            getStartedBtn.href = '/login';
+            getStartedBtn.innerHTML = '<i class="bi bi-rocket me-2"></i>Get Started';
+        }
+    })
+    .catch(error => {
+        // If there's an error, default to login
+        console.log('Auth check failed, defaulting to login');
+        getStartedBtn.href = '/login';
+        getStartedBtn.innerHTML = '<i class="bi bi-rocket me-2"></i>Get Started';
+    });
+});
+</script>
 {% endblock %}

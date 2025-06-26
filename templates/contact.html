@@ -88,8 +88,34 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('contactForm');
+    const submitBtn = form.querySelector('button[type="submit"]');
     
-    form.addEventListener('submit', function(event) {
+    // Success and error message containers
+    const messageContainer = document.createElement('div');
+    messageContainer.className = 'mt-3';
+    form.parentNode.insertBefore(messageContainer, form.nextSibling);
+    
+    function showMessage(message, isError = false) {
+        messageContainer.innerHTML = `
+            <div class="alert alert-${isError ? 'danger' : 'success'} alert-dismissible fade show" role="alert">
+                <i class="bi bi-${isError ? 'exclamation-triangle' : 'check-circle'}-fill me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+    
+    function setLoading(loading) {
+        if (loading) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+        } else {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Send Message';
+        }
+    }
+    
+    form.addEventListener('submit', async function(event) {
         event.preventDefault();
         
         if (!form.checkValidity()) {
@@ -98,18 +124,47 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Here you would typically send the form data to your server
         const formData = {
-            name: document.getElementById('name').value,
-            email: document.getElementById('email').value,
-            subject: document.getElementById('subject').value,
-            message: document.getElementById('message').value
+            name: document.getElementById('name').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            subject: document.getElementById('subject').value.trim(),
+            message: document.getElementById('message').value.trim()
         };
+        
+        // Clear any previous messages
+        messageContainer.innerHTML = '';
+        setLoading(true);
 
-        // For now, just show a success message
-        alert('Thank you for your message! We will get back to you soon.');
-        form.reset();
-        form.classList.remove('was-validated');
+        try {
+            const response = await fetch('/api/contact', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showMessage(result.message || 'Thank you for your message! We will get back to you soon.');
+                form.reset();
+                form.classList.remove('was-validated');
+                
+                // Smooth scroll to message
+                messageContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                throw new Error(result.error || 'Failed to send message');
+            }
+        } catch (error) {
+            console.error('Contact form error:', error);
+            showMessage(
+                error.message || 'Sorry, there was an error sending your message. Please try again later.',
+                true
+            );
+        } finally {
+            setLoading(false);
+        }
     });
 });
 </script>

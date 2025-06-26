@@ -32,11 +32,16 @@ function updateAuthUI(user) {
     
     if (user) {
         // Show profile info
-        const avatar = user.avatar_url || '/static/img/default-profile.svg';
+        const avatar = (user.avatar_url && user.avatar_url.trim() !== '') 
+            ? user.avatar_url 
+            : '/static/img/default-profile.svg';
+        
         loginBtn.innerHTML = `
             <div class="dropdown">
                 <a class="nav-link dropdown-toggle modern-nav-link p-1" href="#" role="button" data-bs-toggle="dropdown">
-                    <img src="${avatar}" class="rounded-circle" width="36" height="36" alt="Profile" style="border: 2px solid rgba(255,255,255,0.3);">
+                    <img src="${avatar}" class="rounded-circle" width="36" height="36" alt="Profile" 
+                         style="border: 2px solid rgba(255,255,255,0.3);"
+                         onerror="this.src='/static/img/default-profile.svg';">
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end modern-dropdown">
                     <li><a class="dropdown-item modern-dropdown-item" href="/profile">

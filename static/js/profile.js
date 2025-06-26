@@ -43,8 +43,14 @@ function populateProfileData(user) {
     document.getElementById('profileEmail').textContent = user.email || '';
     
     // Profile avatar
-    const avatar = user.avatar_url || '/static/img/default-profile.svg';
+    const avatar = (user.avatar_url && user.avatar_url.trim() !== '') 
+        ? user.avatar_url 
+        : '/static/img/default-profile.svg';
+    
     document.getElementById('profileAvatar').src = avatar;
+    document.getElementById('profileAvatar').onerror = function() {
+        this.src = '/static/img/default-profile.svg';
+    };
     
     // Account information form
     document.getElementById('fullName').value = user.full_name || '';
@@ -136,16 +142,20 @@ function animateNumber(elementId, targetValue) {
     updateNumber();
 }
 
+// Global variable to store all activities
+let allActivities = [];
+let showingAllActivities = false;
+
 // Load recent activity
 async function loadRecentActivity() {
     try {
-        const response = await fetch('/api/users/me/activity?limit=10');
+        const response = await fetch('/api/users/me/activity?limit=50'); // Load more to have a good pool
         const activityContainer = document.getElementById('recentActivity');
         
         if (response.ok) {
-            const activities = await response.json();
+            allActivities = await response.json();
             
-            if (activities.length === 0) {
+            if (allActivities.length === 0) {
                 activityContainer.innerHTML = `
                     <div class="text-center text-muted py-4">
                         <i class="bi bi-clock-history display-4 mb-2"></i>
@@ -156,22 +166,9 @@ async function loadRecentActivity() {
                 return;
             }
             
-            activityContainer.innerHTML = activities.map(activity => `
-                <div class="activity-item">
-                    <div class="d-flex align-items-center">
-                        <div class="me-3">
-                            <i class="bi ${activity.icon} text-${activity.color}"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="fw-semibold">${activity.description}</div>
-                            ${activity.target_name ? `<div class="text-muted small">${activity.target_name}</div>` : ''}
-                        </div>
-                        <div class="text-muted small">
-                            ${activity.time_ago}
-                        </div>
-                    </div>
-                </div>
-            `).join('');
+            // Show only the first 3 activities initially
+            showRecentActivities();
+            
         } else {
             throw new Error('Failed to load activities');
         }
@@ -187,11 +184,106 @@ async function loadRecentActivity() {
     }
 }
 
+// Show only recent activities (first 3)
+function showRecentActivities() {
+    const activityContainer = document.getElementById('recentActivity');
+    const viewAllBtn = document.getElementById('viewAllActivitiesBtn');
+    const viewLessContainer = document.getElementById('viewLessContainer');
+    
+    if (allActivities.length === 0) return;
+    
+    // Show first 3 activities
+    const recentActivities = allActivities.slice(0, 3);
+    renderActivities(recentActivities);
+    
+    // Show "View All" button if there are more than 3 activities
+    if (allActivities.length > 3) {
+        viewAllBtn.classList.remove('d-none');
+        viewAllBtn.innerHTML = `<i class="bi bi-list-ul me-1"></i>View All (${allActivities.length})`;
+    } else {
+        viewAllBtn.classList.add('d-none');
+    }
+    
+    // Hide "Show Less" button
+    viewLessContainer.classList.add('d-none');
+    showingAllActivities = false;
+}
+
+// Toggle between showing all activities and recent activities
+function toggleAllActivities() {
+    if (showingAllActivities) {
+        showRecentActivities();
+    } else {
+        showAllActivities();
+    }
+}
+
+// Show all activities
+function showAllActivities() {
+    const activityContainer = document.getElementById('recentActivity');
+    const viewAllBtn = document.getElementById('viewAllActivitiesBtn');
+    const viewLessContainer = document.getElementById('viewLessContainer');
+    
+    // Render all activities
+    renderActivities(allActivities);
+    
+    // Update button to show "Show Less"
+    viewAllBtn.innerHTML = '<i class="bi bi-chevron-up me-1"></i>Show Less';
+    
+    // Show "Show Less" button at the bottom
+    viewLessContainer.classList.remove('d-none');
+    showingAllActivities = true;
+}
+
+// Helper function to render activities
+function renderActivities(activities) {
+    const activityContainer = document.getElementById('recentActivity');
+    
+    activityContainer.innerHTML = activities.map((activity, index) => `
+        <div class="activity-item" style="animation-delay: ${index * 0.1}s">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="bi ${activity.icon} text-${activity.color}"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="fw-semibold">${activity.description}</div>
+                    ${activity.target_name ? `<div class="text-muted small">${activity.target_name}</div>` : ''}
+                </div>
+                <div class="text-muted small">
+                    ${activity.time_ago}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
 // Setup event listeners
 function setupEventListeners() {
     // Settings toggles
     document.getElementById('emailNotifications').addEventListener('change', saveSettings);
     document.getElementById('weeklyDigest').addEventListener('change', saveSettings);
+    
+    // Delete account modal listeners
+    const deleteConfirmation = document.getElementById('deleteConfirmation');
+    const confirmUnderstand = document.getElementById('confirmUnderstand');
+    const finalDeleteBtn = document.getElementById('finalDeleteBtn');
+    
+    // Enable/disable delete button based on confirmation
+    function checkDeleteConfirmation() {
+        const isTextCorrect = deleteConfirmation.value.trim() === 'DELETE';
+        const isCheckboxChecked = confirmUnderstand.checked;
+        finalDeleteBtn.disabled = !(isTextCorrect && isCheckboxChecked);
+    }
+    
+    deleteConfirmation.addEventListener('input', checkDeleteConfirmation);
+    confirmUnderstand.addEventListener('change', checkDeleteConfirmation);
+    
+    // Reset modal when it's hidden
+    document.getElementById('deleteAccountModal').addEventListener('hidden.bs.modal', function() {
+        deleteConfirmation.value = '';
+        confirmUnderstand.checked = false;
+        finalDeleteBtn.disabled = true;
+    });
 }
 
 // Toggle edit mode
@@ -334,23 +426,56 @@ async function createRoadmap() {
     }
 }
 
-// Confirm account deletion
+// Show delete account confirmation modal
 function confirmDeleteAccount() {
-    if (confirm('Are you sure you want to delete your account? This action cannot be undone and will permanently delete all your roadmaps and data.')) {
-        if (confirm('This is your final warning. Are you absolutely sure you want to delete your account?')) {
-            deleteAccount();
-        }
-    }
+    const modal = new bootstrap.Modal(document.getElementById('deleteAccountModal'));
+    modal.show();
 }
 
-// Delete account
-async function deleteAccount() {
+// Execute account deletion after all confirmations
+async function executeAccountDeletion() {
+    const finalDeleteBtn = document.getElementById('finalDeleteBtn');
+    const originalText = finalDeleteBtn.innerHTML;
+    
     try {
-        // This would need a backend endpoint to delete account
-        showErrorMessage('Account deletion is not yet implemented');
+        // Show loading state
+        finalDeleteBtn.disabled = true;
+        finalDeleteBtn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Deleting...';
+        
+        const response = await fetch('/api/users/me', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            // Show success message
+            showSuccessMessage('Account deleted successfully. You will be redirected shortly.');
+            
+            // Hide modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteAccountModal'));
+            modal.hide();
+            
+            // Redirect to home page after a short delay
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+            
+        } else {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to delete account');
+        }
+        
     } catch (error) {
         console.error('Error deleting account:', error);
-        showErrorMessage('Failed to delete account');
+        showErrorMessage(error.message || 'Failed to delete account. Please try again.');
+        
+        // Restore button state
+        finalDeleteBtn.disabled = false;
+        finalDeleteBtn.innerHTML = originalText;
     }
 }
 

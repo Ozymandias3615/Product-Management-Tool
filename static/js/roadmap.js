@@ -30,8 +30,8 @@ class RoadmapManager {
         const saveFeatureBtn = document.getElementById('saveFeature');
         if (saveFeatureBtn) {
             saveFeatureBtn.addEventListener('click', () => {
-                this.saveFeature();
-            });
+            this.saveFeature();
+        });
         }
 
         // Delete and edit buttons in detail modal (only if they exist - not in demo mode)
@@ -354,13 +354,13 @@ class RoadmapManager {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(featureData)
             })
-                .then(response => {
+            .then(response => {
                     if (response.ok) return response.json();
                     throw new Error('Failed to create feature');
                 })
                 .then(newFeature => {
                     // Add to local array
-                    this.features.push(newFeature);
+                this.features.push(newFeature);
                     this.setView(this.currentView); // Re-render current view
                     // Hide modal
                     bootstrap.Modal.getInstance(document.getElementById('addFeatureModal')).hide();
@@ -2642,21 +2642,32 @@ class RoadmapManager {
     
     applyGanttStyling(wrapper) {
         try {
-            // Simple blue styling for task bars only - minimal and safe
+            // Enhanced blue styling with gradients and professional polish
             const styles = `
-                /* Very specific task bar targeting to avoid affecting background */
+                /* SVG Gradient Definitions */
+                .gantt-wrapper svg defs {
+                    position: absolute;
+                    width: 0;
+                    height: 0;
+                }
+                
+                /* Professional task bar targeting with gradients */
                 .gantt-wrapper g.bar rect { 
                     fill: #0056D2 !important; 
                     stroke: #003d99 !important; 
-                    stroke-width: 2px !important; 
+                    stroke-width: 2px !important;
+                    rx: 8 !important;
+                    ry: 8 !important;
+                    filter: drop-shadow(0 3px 8px rgba(0, 86, 210, 0.2)) !important;
                 }
                 
-                /* Target by our custom task classes if they exist */
+                /* Enhanced custom task classes with professional gradients */
                 .gantt-wrapper .task-high-planned rect,
                 .gantt-wrapper .task-high-in-progress rect { 
                     fill: #0056D2 !important; 
                     stroke: #003d99 !important; 
-                    stroke-width: 2px !important; 
+                    stroke-width: 2px !important;
+                    filter: drop-shadow(0 3px 8px rgba(0, 86, 210, 0.25)) !important;
                 }
                 
                 .gantt-wrapper .task-medium-planned rect,
@@ -2664,70 +2675,155 @@ class RoadmapManager {
                     fill: #0056D2 !important; 
                     stroke: #003d99 !important; 
                     stroke-width: 2px !important; 
-                    opacity: 0.8 !important;
+                    opacity: 0.9 !important;
+                    filter: drop-shadow(0 2px 6px rgba(0, 86, 210, 0.2)) !important;
                 }
                 
                 .gantt-wrapper .task-low-planned rect,
                 .gantt-wrapper .task-low-in-progress rect { 
-                    fill: #0056D2 !important; 
-                    stroke: #003d99 !important; 
+                    fill: #B3D7FF !important; 
+                    stroke: #0056D2 !important; 
                     stroke-width: 2px !important; 
-                    opacity: 0.6 !important;
+                    opacity: 0.85 !important;
+                    filter: drop-shadow(0 2px 6px rgba(0, 86, 210, 0.15)) !important;
                 }
                 
-                /* Completed tasks */
+                /* Completed tasks with sophisticated styling */
                 .gantt-wrapper .task-high-completed rect,
                 .gantt-wrapper .task-medium-completed rect,
                 .gantt-wrapper .task-low-completed rect { 
                     fill: #003d99 !important; 
                     stroke: #002266 !important; 
                     stroke-width: 2px !important;
+                    filter: drop-shadow(0 3px 8px rgba(0, 61, 153, 0.3)) !important;
                 }
                 
-                /* Progress bars */
+                /* Refined progress bars */
                 .gantt-wrapper .bar .bar-progress { 
-                    fill: rgba(255,255,255,0.4) !important; 
-                    stroke: rgba(255,255,255,0.6) !important; 
-                    stroke-width: 1px !important; 
+                    fill: rgba(255,255,255,0.5) !important; 
+                    stroke: rgba(255,255,255,0.7) !important; 
+                    stroke-width: 1px !important;
+                    rx: 6 !important;
+                    ry: 6 !important;
                 }
                 
-                /* Grid styling */
+                /* Professional grid styling */
                 .gantt-wrapper .grid .grid-header rect { 
-                    fill: var(--color-primary) !important; 
+                    fill: var(--color-primary) !important;
+                    stroke: #0041a8 !important;
+                    stroke-width: 2px !important;
                 }
                 .gantt-wrapper .grid .grid-header text { 
                     fill: white !important; 
-                    font-weight: 600 !important; 
-                    text-shadow: 0 1px 2px rgba(0,0,0,0.2) !important; 
+                    font-weight: 700 !important; 
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                    text-shadow: 0 1px 3px rgba(0,0,0,0.3) !important; 
                 }
                 
-                /* Row styling */
+                /* Enhanced row styling with better contrast */
                 .gantt-wrapper .grid .grid-row rect { 
-                    stroke: #E4F0FF !important; 
+                    stroke: #E8F2FF !important; 
                     stroke-width: 1px !important; 
                 }
                 .gantt-wrapper .grid .grid-row:nth-child(odd) rect { 
                     fill: #ffffff !important; 
                 }
                 .gantt-wrapper .grid .grid-row:nth-child(even) rect { 
-                    fill: #f8fcff !important; 
+                    fill: #fafcff !important; 
                 }
                 
-                /* Hover effects */
+                /* Professional row labels */
+                .gantt-wrapper .grid .grid-row text {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                    font-weight: 600 !important;
+                    fill: #2c3e50 !important;
+                    font-size: 14px !important;
+                }
+                
+                /* Enhanced hover effects with smooth transitions */
                 .gantt-wrapper .bar:hover .bar-inner { 
-                    filter: brightness(1.1) saturate(1.2) !important; 
-                    transition: all 0.2s ease !important; 
+                    filter: brightness(1.15) saturate(1.3) drop-shadow(0 4px 12px rgba(0, 86, 210, 0.3)) !important; 
+                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    transform: scale(1.03) !important;
                 }
                 
-                /* Today line */
+                .gantt-wrapper .bar:hover rect {
+                    stroke-width: 3px !important;
+                    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                }
+                
+                /* Professional today line */
                 .gantt-wrapper .today-highlight { 
                     stroke: #FF6B35 !important; 
                     stroke-width: 3px !important; 
-                    stroke-dasharray: 5,5 !important; 
+                    stroke-dasharray: 8,4 !important;
+                    opacity: 0.85 !important;
+                    filter: drop-shadow(0 1px 3px rgba(255, 107, 53, 0.3)) !important;
+                }
+                
+                /* Enhanced text readability */
+                .gantt-wrapper text {
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                }
+                
+                .gantt-wrapper .bar-label {
+                    font-size: 12px !important;
+                    font-weight: 600 !important;
+                    fill: #2c3e50 !important;
+                    text-shadow: 0 1px 2px rgba(255,255,255,0.8) !important;
+                }
+                
+                /* Grid line refinements */
+                .gantt-wrapper .grid .grid-line {
+                    stroke: #E8F2FF !important;
+                    stroke-width: 1px !important;
+                    opacity: 0.7 !important;
+                }
+                
+                /* SVG background cleanup */
+                .gantt-wrapper svg {
+                    background: transparent !important;
+                    border-radius: 8px;
+                }
+                
+                /* Custom selector button styling */
+                .gantt-wrapper .custom-view-selector {
+                    position: absolute;
+                    top: 15px;
+                    right: 15px;
+                    z-index: 10;
+                    display: flex;
+                    gap: 8px;
+                    background: rgba(255,255,255,0.95);
+                    backdrop-filter: blur(10px);
+                    border-radius: 12px;
+                    padding: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                }
+                
+                .gantt-wrapper .custom-view-selector button {
+                    border-radius: 8px !important;
+                    font-weight: 600 !important;
+                    font-size: 13px !important;
+                    padding: 8px 16px !important;
+                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    border: 2px solid #0056D2 !important;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                }
+                
+                .gantt-wrapper .custom-view-selector button:hover {
+                    transform: translateY(-1px) !important;
+                    box-shadow: 0 4px 8px rgba(0, 86, 210, 0.2) !important;
+                }
+                
+                .gantt-wrapper .custom-view-selector button.active {
+                    background: linear-gradient(135deg, #0056D2 0%, #4A90E2 100%) !important;
+                    color: white !important;
+                    box-shadow: 0 3px 8px rgba(0, 86, 210, 0.3) !important;
                 }
             `;
             
-            // Inject styles
+            // Inject enhanced styles
             let styleSheet = document.getElementById('gantt-custom-styles');
             if (!styleSheet) {
                 styleSheet = document.createElement('style');
@@ -2736,8 +2832,74 @@ class RoadmapManager {
             }
             styleSheet.textContent = styles;
             
+            // Add SVG gradient definitions for enhanced visual effects
+            this.addGradientDefinitions(wrapper);
+            
         } catch (error) {
             console.warn('Could not apply custom styling:', error);
+        }
+    }
+    
+    addGradientDefinitions(wrapper) {
+        try {
+            const svg = wrapper.querySelector('svg');
+            if (!svg) return;
+            
+            // Check if defs already exists
+            let defs = svg.querySelector('defs');
+            if (!defs) {
+                defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                svg.insertBefore(defs, svg.firstChild);
+            }
+            
+            // Clear existing gradients
+            defs.innerHTML = '';
+            
+            // Create gradient definitions
+            const gradients = [
+                {
+                    id: 'gradient-planned',
+                    stops: [
+                        { offset: '0%', color: '#E3F2FD' },
+                        { offset: '100%', color: '#B3D7FF' }
+                    ]
+                },
+                {
+                    id: 'gradient-progress',
+                    stops: [
+                        { offset: '0%', color: '#1976D2' },
+                        { offset: '100%', color: '#0056D2' }
+                    ]
+                },
+                {
+                    id: 'gradient-completed',
+                    stops: [
+                        { offset: '0%', color: '#0D47A1' },
+                        { offset: '100%', color: '#003d99' }
+                    ]
+                }
+            ];
+            
+            gradients.forEach(grad => {
+                const gradient = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+                gradient.setAttribute('id', grad.id);
+                gradient.setAttribute('x1', '0%');
+                gradient.setAttribute('y1', '0%');
+                gradient.setAttribute('x2', '0%');
+                gradient.setAttribute('y2', '100%');
+                
+                grad.stops.forEach(stop => {
+                    const stopElement = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+                    stopElement.setAttribute('offset', stop.offset);
+                    stopElement.setAttribute('stop-color', stop.color);
+                    gradient.appendChild(stopElement);
+                });
+                
+                defs.appendChild(gradient);
+            });
+            
+        } catch (error) {
+            console.warn('Could not add gradient definitions:', error);
         }
     }
     

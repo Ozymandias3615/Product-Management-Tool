@@ -5,8 +5,8 @@
         <!-- Profile Header -->
         <div class="col-12 mb-4">
             <div class="profile-header">
-                <h1 class="display-6 fw-bold text-center mb-0">My Profile</h1>
-                <p class="text-muted text-center">Manage your account settings and preferences</p>
+                <h1 class="display-6 fw-bold text-center mb-3">My Profile</h1>
+                <p class="text-white text-center">Manage your account settings and preferences</p>
             </div>
         </div>
         
@@ -118,8 +118,11 @@
             
             <!-- Recent Activity -->
             <div class="card modern-card border-0 shadow-sm mb-4">
-                <div class="card-header bg-transparent border-0">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold mb-0">Recent Activity</h6>
+                    <button id="viewAllActivitiesBtn" class="btn btn-sm btn-outline-primary d-none" onclick="toggleAllActivities()">
+                        <i class="bi bi-list-ul me-1"></i>View All
+                    </button>
                 </div>
                 <div class="card-body">
                     <div id="recentActivity">
@@ -127,6 +130,11 @@
                             <i class="bi bi-clock-history display-4 mb-2"></i>
                             <p>Loading recent activity...</p>
                         </div>
+                    </div>
+                    <div id="viewLessContainer" class="text-center mt-3 d-none">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="showRecentActivities()">
+                            <i class="bi bi-chevron-up me-1"></i>Show Less
+                        </button>
                     </div>
                 </div>
             </div>
@@ -168,9 +176,9 @@
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
+      </div>
     </div>
+  </div>
 </div>
 
 <!-- Create Roadmap Modal -->
@@ -197,6 +205,56 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="createRoadmap()">
                     <i class="bi bi-plus-circle me-1"></i>Create Roadmap
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Confirmation Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title fw-bold">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Delete Account
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-trash text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <h6 class="fw-bold text-center mb-3">Are you absolutely sure?</h6>
+                <div class="alert alert-danger border-0" role="alert">
+                    <h6 class="alert-heading fw-bold">
+                        <i class="bi bi-exclamation-triangle me-2"></i>This action cannot be undone!
+                    </h6>
+                    <p class="mb-2">This will permanently delete:</p>
+                    <ul class="mb-0">
+                        <li>Your account and profile</li>
+                        <li>All your roadmaps and features</li>
+                        <li>Your team memberships</li>
+                        <li>All activity history</li>
+                    </ul>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Type "DELETE" to confirm:</label>
+                    <input type="text" class="form-control" id="deleteConfirmation" placeholder="Type DELETE here">
+                </div>
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="confirmUnderstand">
+                    <label class="form-check-label fw-semibold" for="confirmUnderstand">
+                        I understand that this action is permanent and cannot be undone
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="finalDeleteBtn" onclick="executeAccountDeletion()" disabled>
+                    <i class="bi bi-trash me-1"></i>Delete My Account
                 </button>
             </div>
         </div>
@@ -306,10 +364,36 @@
     background: rgba(0, 86, 210, 0.05);
     border-radius: 0 0.5rem 0.5rem 0;
     margin-bottom: 0.75rem;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: slideInActivity 0.3s ease forwards;
+    transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+    background: rgba(0, 86, 210, 0.1);
+    transform: translateX(5px);
 }
 
 .activity-item:last-child {
     margin-bottom: 0;
+}
+
+@keyframes slideInActivity {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Button animations */
+#viewAllActivitiesBtn, #viewLessContainer button {
+    transition: all 0.3s ease;
+}
+
+#viewAllActivitiesBtn:hover, #viewLessContainer button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 86, 210, 0.2);
 }
 </style>
 {% endblock %}
