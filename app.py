@@ -2046,90 +2046,229 @@ def verify_token():
 # Demo route to create and view a sample roadmap
 @app.route('/demo')
 def demo():
-    # Check or create demo project
-    demo_rm = Roadmap.query.filter_by(name='Product Compass Demo').first()
-    if not demo_rm:
-        demo_rm = Roadmap(
-            name='Product Compass Demo',
-            description='Experience the full power of Product Compass with this interactive demo showcasing all our key features.',
-            is_public=True  # Make demo public
-        )
-        db.session.add(demo_rm)
-        db.session.commit()
-
-        # Add comprehensive sample features covering all product capabilities
-        samples = [
-            # Core Product Features
-            {'title': 'Drag-and-Drop Interface', 'description': 'Intuitive drag-and-drop interface for roadmap planning and task management.', 'priority': 'high', 'status': 'completed', 'release': 'Core Features', 'date': datetime.today().date()},
-            {'title': 'Timeline Views', 'description': 'Multiple timeline views including monthly, quarterly, and sprint-based planning.', 'priority': 'high', 'status': 'completed', 'release': 'Core Features', 'date': datetime.today().date()},
-            {'title': 'Kanban Board', 'description': 'Visual task management with customizable columns and drag-drop functionality.', 'priority': 'high', 'status': 'completed', 'release': 'Core Features', 'date': datetime.today().date()},
-            
-            # In Progress Features
-            {'title': 'Gantt Chart Integration', 'description': 'Interactive Gantt charts for timeline visualization and dependency mapping.', 'priority': 'high', 'status': 'in-progress', 'release': 'Advanced Planning', 'date': (datetime.today() + timedelta(days=30)).date()},
-            {'title': 'Team Collaboration', 'description': 'Real-time collaboration features including comments, mentions, and notifications.', 'priority': 'medium', 'status': 'in-progress', 'release': 'Advanced Planning', 'date': (datetime.today() + timedelta(days=45)).date()},
-            {'title': 'Resource Management', 'description': 'Team workload tracking and resource allocation features.', 'priority': 'medium', 'status': 'in-progress', 'release': 'Advanced Planning', 'date': (datetime.today() + timedelta(days=60)).date()},
-            
-            # Upcoming Features
-            {'title': 'Customer Feedback Portal', 'description': 'Dedicated portal for collecting and organizing customer feedback and feature requests.', 'priority': 'high', 'status': 'planned', 'release': 'Customer Insights', 'date': (datetime.today() + timedelta(days=90)).date()},
-            {'title': 'Persona Builder', 'description': 'Tools for creating and managing detailed customer personas.', 'priority': 'medium', 'status': 'planned', 'release': 'Customer Insights', 'date': (datetime.today() + timedelta(days=90)).date()},
-            {'title': 'Analytics Dashboard', 'description': 'Comprehensive analytics for tracking project progress and team performance.', 'priority': 'medium', 'status': 'planned', 'release': 'Customer Insights', 'date': (datetime.today() + timedelta(days=120)).date()},
-            
-            # Future Enhancements
-            {'title': 'AI-Powered Insights', 'description': 'Machine learning features for predictive planning and risk assessment.', 'priority': 'low', 'status': 'planned', 'release': 'Future Innovation', 'date': (datetime.today() + timedelta(days=150)).date()},
-            {'title': 'Advanced Exports', 'description': 'Enhanced export options including PDF, Excel, and presentation formats.', 'priority': 'low', 'status': 'planned', 'release': 'Future Innovation', 'date': (datetime.today() + timedelta(days=180)).date()}
-        ]
-
-        for s in samples:
-            f = Feature(
-                title=s['title'],
-                description=s['description'],
-                priority=s['priority'],
-                status=s['status'],
-                release=s['release'],
-                date=s['date'],
-                roadmap_id=demo_rm.id
+    try:
+        # Ensure database is initialized
+        init_db()
+        
+        # Check or create demo project
+        demo_rm = Roadmap.query.filter_by(name='Product Compass Demo').first()
+        if not demo_rm:
+            print("Creating demo roadmap...")
+            demo_rm = Roadmap(
+                name='Product Compass Demo',
+                description='Experience the full power of Product Compass with this interactive demo showcasing all our key features.',
+                is_public=True  # Make demo public
             )
-            db.session.add(f)
-        db.session.commit()
+            db.session.add(demo_rm)
+            db.session.flush()  # Get the ID before committing
 
-    # Render the demo template directly (no authentication required)
-    description = demo_rm.description or 'Experience the full power of Product Compass with this interactive demo showcasing all our key features.'
-    return render_template('demo.html', 
-                         roadmap_id=demo_rm.id, 
-                         roadmap_name=demo_rm.name,
-                         roadmap_description=description,
-                         user_role='demo')
+            # Add comprehensive sample features covering all product capabilities
+            samples = [
+                # Core Product Features
+                {'title': 'Drag-and-Drop Interface', 'description': 'Intuitive drag-and-drop interface for roadmap planning and task management.', 'priority': 'high', 'status': 'completed', 'release': 'Core Features', 'date': datetime.today().date()},
+                {'title': 'Timeline Views', 'description': 'Multiple timeline views including monthly, quarterly, and sprint-based planning.', 'priority': 'high', 'status': 'completed', 'release': 'Core Features', 'date': datetime.today().date()},
+                {'title': 'Kanban Board', 'description': 'Visual task management with customizable columns and drag-drop functionality.', 'priority': 'high', 'status': 'completed', 'release': 'Core Features', 'date': datetime.today().date()},
+                
+                # In Progress Features
+                {'title': 'Gantt Chart Integration', 'description': 'Interactive Gantt charts for timeline visualization and dependency mapping.', 'priority': 'high', 'status': 'in-progress', 'release': 'Advanced Planning', 'date': (datetime.today() + timedelta(days=30)).date()},
+                {'title': 'Team Collaboration', 'description': 'Real-time collaboration features including comments, mentions, and notifications.', 'priority': 'medium', 'status': 'in-progress', 'release': 'Advanced Planning', 'date': (datetime.today() + timedelta(days=45)).date()},
+                {'title': 'Resource Management', 'description': 'Team workload tracking and resource allocation features.', 'priority': 'medium', 'status': 'in-progress', 'release': 'Advanced Planning', 'date': (datetime.today() + timedelta(days=60)).date()},
+                
+                # Upcoming Features
+                {'title': 'Customer Feedback Portal', 'description': 'Dedicated portal for collecting and organizing customer feedback and feature requests.', 'priority': 'high', 'status': 'planned', 'release': 'Customer Insights', 'date': (datetime.today() + timedelta(days=90)).date()},
+                {'title': 'Persona Builder', 'description': 'Tools for creating and managing detailed customer personas.', 'priority': 'medium', 'status': 'planned', 'release': 'Customer Insights', 'date': (datetime.today() + timedelta(days=90)).date()},
+                {'title': 'Analytics Dashboard', 'description': 'Comprehensive analytics for tracking project progress and team performance.', 'priority': 'medium', 'status': 'planned', 'release': 'Customer Insights', 'date': (datetime.today() + timedelta(days=120)).date()},
+                
+                # Future Enhancements
+                {'title': 'AI-Powered Insights', 'description': 'Machine learning features for predictive planning and risk assessment.', 'priority': 'low', 'status': 'planned', 'release': 'Future Innovation', 'date': (datetime.today() + timedelta(days=150)).date()},
+                {'title': 'Advanced Exports', 'description': 'Enhanced export options including PDF, Excel, and presentation formats.', 'priority': 'low', 'status': 'planned', 'release': 'Future Innovation', 'date': (datetime.today() + timedelta(days=180)).date()}
+            ]
+
+            for s in samples:
+                f = Feature(
+                    title=s['title'],
+                    description=s['description'],
+                    priority=s['priority'],
+                    status=s['status'],
+                    release=s['release'],
+                    date=s['date'],
+                    roadmap_id=demo_rm.id
+                )
+                db.session.add(f)
+            
+            db.session.commit()
+            print(f"Created demo roadmap with ID: {demo_rm.id}")
+        else:
+            print(f"Demo roadmap exists with ID: {demo_rm.id}")
+
+        # Render the demo template directly (no authentication required)
+        description = demo_rm.description or 'Experience the full power of Product Compass with this interactive demo showcasing all our key features.'
+        return render_template('demo.html', 
+                             roadmap_id=demo_rm.id, 
+                             roadmap_name=demo_rm.name,
+                             roadmap_description=description,
+                             user_role='demo')
+                             
+    except Exception as e:
+        print(f"Error in demo route: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Return a simple demo page with error handling
+        return render_template('demo.html', 
+                             roadmap_id=1, 
+                             roadmap_name='Product Compass Demo',
+                             roadmap_description='Experience the full power of Product Compass with this interactive demo showcasing all our key features.',
+                             user_role='demo')
 
 # Public API endpoint for demo data
 @app.route('/api/demo/roadmap')
 def get_demo_roadmap():
-    # Get or create demo roadmap
-    demo_rm = Roadmap.query.filter_by(name='Product Compass Demo').first()
-    if not demo_rm:
-        # Trigger demo creation if it doesn't exist
-        demo()
+    try:
+        # Ensure database is initialized
+        init_db()
+        
+        # Get or create demo roadmap
         demo_rm = Roadmap.query.filter_by(name='Product Compass Demo').first()
-    
-    # Get features
-    features = Feature.query.filter_by(roadmap_id=demo_rm.id).order_by(Feature.date).all()
-    
-    return jsonify({
-        'roadmap': {
-            'id': demo_rm.id,
-            'name': demo_rm.name,
-            'description': demo_rm.description,
-            'is_demo': True
-        },
-        'features': [{
-            'id': f.id,
-            'title': f.title,
-            'description': f.description,
-            'priority': f.priority,
-            'status': f.status,
-            'release': f.release,
-            'date': f.date.isoformat()
-        } for f in features]
-    }), 200
+        if not demo_rm:
+            print("Demo roadmap not found, creating it...")
+            # Trigger demo creation if it doesn't exist
+            demo()
+            demo_rm = Roadmap.query.filter_by(name='Product Compass Demo').first()
+        
+        if not demo_rm:
+            print("Failed to create demo roadmap, returning fallback data")
+            # Return fallback data if demo creation fails
+            return jsonify({
+                'roadmap': {
+                    'id': 1,
+                    'name': 'Product Compass Demo',
+                    'description': 'Experience the full power of Product Compass with this interactive demo showcasing all our key features.',
+                    'is_demo': True
+                },
+                'features': [
+                    {
+                        'id': 1,
+                        'title': 'Drag-and-Drop Interface',
+                        'description': 'Intuitive drag-and-drop interface for roadmap planning and task management.',
+                        'priority': 'high',
+                        'status': 'completed',
+                        'release': 'Core Features',
+                        'date': datetime.today().date().isoformat()
+                    },
+                    {
+                        'id': 2,
+                        'title': 'Timeline Views',
+                        'description': 'Multiple timeline views including monthly, quarterly, and sprint-based planning.',
+                        'priority': 'high',
+                        'status': 'completed',
+                        'release': 'Core Features',
+                        'date': datetime.today().date().isoformat()
+                    },
+                    {
+                        'id': 3,
+                        'title': 'Kanban Board',
+                        'description': 'Visual task management with customizable columns and drag-drop functionality.',
+                        'priority': 'high',
+                        'status': 'completed',
+                        'release': 'Core Features',
+                        'date': datetime.today().date().isoformat()
+                    },
+                    {
+                        'id': 4,
+                        'title': 'Gantt Chart Integration',
+                        'description': 'Interactive Gantt charts for timeline visualization and dependency mapping.',
+                        'priority': 'high',
+                        'status': 'in-progress',
+                        'release': 'Advanced Planning',
+                        'date': (datetime.today() + timedelta(days=30)).date().isoformat()
+                    },
+                    {
+                        'id': 5,
+                        'title': 'Team Collaboration',
+                        'description': 'Real-time collaboration features including comments, mentions, and notifications.',
+                        'priority': 'medium',
+                        'status': 'in-progress',
+                        'release': 'Advanced Planning',
+                        'date': (datetime.today() + timedelta(days=45)).date().isoformat()
+                    },
+                    {
+                        'id': 6,
+                        'title': 'Customer Feedback Portal',
+                        'description': 'Dedicated portal for collecting and organizing customer feedback and feature requests.',
+                        'priority': 'high',
+                        'status': 'planned',
+                        'release': 'Customer Insights',
+                        'date': (datetime.today() + timedelta(days=90)).date().isoformat()
+                    }
+                ]
+            }), 200
+        
+        # Get features
+        features = Feature.query.filter_by(roadmap_id=demo_rm.id).order_by(Feature.date).all()
+        print(f"Found {len(features)} features for demo roadmap")
+        
+        return jsonify({
+            'roadmap': {
+                'id': demo_rm.id,
+                'name': demo_rm.name,
+                'description': demo_rm.description,
+                'is_demo': True
+            },
+            'features': [{
+                'id': f.id,
+                'title': f.title,
+                'description': f.description,
+                'priority': f.priority,
+                'status': f.status,
+                'release': f.release,
+                'date': f.date.isoformat()
+            } for f in features]
+        }), 200
+        
+    except Exception as e:
+        print(f"Error in demo API: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Return fallback demo data
+        return jsonify({
+            'roadmap': {
+                'id': 1,
+                'name': 'Product Compass Demo',
+                'description': 'Experience the full power of Product Compass with this interactive demo showcasing all our key features.',
+                'is_demo': True
+            },
+            'features': [
+                {
+                    'id': 1,
+                    'title': 'Drag-and-Drop Interface',
+                    'description': 'Intuitive drag-and-drop interface for roadmap planning and task management.',
+                    'priority': 'high',
+                    'status': 'completed',
+                    'release': 'Core Features',
+                    'date': datetime.today().date().isoformat()
+                },
+                {
+                    'id': 2,
+                    'title': 'Timeline Views',
+                    'description': 'Multiple timeline views including monthly, quarterly, and sprint-based planning.',
+                    'priority': 'high',
+                    'status': 'completed',
+                    'release': 'Core Features',
+                    'date': datetime.today().date().isoformat()
+                },
+                {
+                    'id': 3,
+                    'title': 'Gantt Chart Integration',
+                    'description': 'Interactive Gantt charts for timeline visualization and dependency mapping.',
+                    'priority': 'high',
+                    'status': 'in-progress',
+                    'release': 'Advanced Planning',
+                    'date': (datetime.today() + timedelta(days=30)).date().isoformat()
+                }
+            ]
+        }), 200
 
 # Quick fix endpoint to update demo description
 @app.route('/api/demo/fix-description', methods=['POST'])
@@ -2978,10 +3117,78 @@ def test_auth():
         'email': user.email
     }), 200
 
+# Initialize demo data endpoint
+@app.route('/api/demo/init', methods=['POST'])
+def init_demo():
+    try:
+        # Ensure database is initialized
+        init_db()
+        
+        # Force creation of demo data
+        demo_rm = Roadmap.query.filter_by(name='Product Compass Demo').first()
+        if demo_rm:
+            # Delete existing demo and recreate
+            Feature.query.filter_by(roadmap_id=demo_rm.id).delete()
+            db.session.delete(demo_rm)
+            db.session.commit()
+        
+        # Create new demo roadmap
+        demo_rm = Roadmap(
+            name='Product Compass Demo',
+            description='Experience the full power of Product Compass with this interactive demo showcasing all our key features.',
+            is_public=True  # Make demo public
+        )
+        db.session.add(demo_rm)
+        db.session.flush()  # Get the ID before committing
+
+        # Add sample features
+        samples = [
+            {'title': 'Drag-and-Drop Interface', 'description': 'Intuitive drag-and-drop interface for roadmap planning and task management.', 'priority': 'high', 'status': 'completed', 'release': 'Core Features', 'date': datetime.today().date()},
+            {'title': 'Timeline Views', 'description': 'Multiple timeline views including monthly, quarterly, and sprint-based planning.', 'priority': 'high', 'status': 'completed', 'release': 'Core Features', 'date': datetime.today().date()},
+            {'title': 'Kanban Board', 'description': 'Visual task management with customizable columns and drag-drop functionality.', 'priority': 'high', 'status': 'completed', 'release': 'Core Features', 'date': datetime.today().date()},
+            {'title': 'Gantt Chart Integration', 'description': 'Interactive Gantt charts for timeline visualization and dependency mapping.', 'priority': 'high', 'status': 'in-progress', 'release': 'Advanced Planning', 'date': (datetime.today() + timedelta(days=30)).date()},
+            {'title': 'Team Collaboration', 'description': 'Real-time collaboration features including comments, mentions, and notifications.', 'priority': 'medium', 'status': 'in-progress', 'release': 'Advanced Planning', 'date': (datetime.today() + timedelta(days=45)).date()},
+            {'title': 'Customer Feedback Portal', 'description': 'Dedicated portal for collecting and organizing customer feedback and feature requests.', 'priority': 'high', 'status': 'planned', 'release': 'Customer Insights', 'date': (datetime.today() + timedelta(days=90)).date()},
+        ]
+
+        for s in samples:
+            f = Feature(
+                title=s['title'],
+                description=s['description'],
+                priority=s['priority'],
+                status=s['status'],
+                release=s['release'],
+                date=s['date'],
+                roadmap_id=demo_rm.id
+            )
+            db.session.add(f)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Demo initialized successfully',
+            'roadmap_id': demo_rm.id,
+            'features_created': len(samples)
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Failed to initialize demo: {str(e)}'}), 500
+
 if __name__ == '__main__':
     # Initialize database tables
     with app.app_context():
         init_db()
+        
+        # Ensure demo data exists for production
+        try:
+            demo_rm = Roadmap.query.filter_by(name='Product Compass Demo').first()
+            if not demo_rm:
+                print("Creating demo data on startup...")
+                demo()  # Create demo data
+                print("Demo data created successfully")
+        except Exception as e:
+            print(f"Warning: Could not create demo data on startup: {e}")
     
     # Check if running in production
     is_production = os.getenv('FLASK_ENV') == 'production'
