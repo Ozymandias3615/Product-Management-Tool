@@ -1960,10 +1960,19 @@ def accept_team_invitation(invitation_token):
 
 # Initialize Firebase Admin
 try:
-    cred = credentials.Certificate('firebase-credentials.json')
-    firebase_app = initialize_app(cred)
-except FileNotFoundError:
-    print("Warning: firebase-credentials.json not found. Authentication will not work.")
+    # Try to use environment variable for credentials (for production)
+    firebase_creds = os.getenv('FIREBASE_CREDENTIALS_JSON')
+    if firebase_creds:
+        import json
+        cred_dict = json.loads(firebase_creds)
+        cred = credentials.Certificate(cred_dict)
+        firebase_app = initialize_app(cred)
+    else:
+        # Fallback to file (for local development)
+        cred = credentials.Certificate('firebase-credentials.json')
+        firebase_app = initialize_app(cred)
+except Exception as e:
+    print(f"Warning: Firebase initialization failed: {e}")
     firebase_app = None
 
 @app.route('/')
