@@ -1243,6 +1243,124 @@ def get_user_activity():
     
     return jsonify(result), 200
 
+# API to get recent notifications for the current user
+@app.route('/api/users/me/notifications', methods=['GET'])
+@login_required
+def get_user_notifications():
+    user = get_current_user()
+    limit = min(request.args.get('limit', 10, type=int), 50)  # Max 50 notifications
+    
+    # Get recent activities related to the user (last 7 days)
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    
+    # Get activities where user was invited, added to roadmaps, or relevant changes happened
+    user_roadmap_ids = [m.roadmap_id for m in user.memberships if m.status == 'active']
+    
+    activities = UserActivity.query.filter(
+        db.or_(
+            # Activities about the user (being invited, added to teams, etc.)
+            db.and_(
+                UserActivity.action_type.in_(['invited', 'joined']),
+                UserActivity.user_id == user.id
+            ),
+            # Activities on roadmaps the user is a member of (but not their own actions)
+            db.and_(
+                UserActivity.action_type.in_(['created', 'updated', 'deleted']),
+                UserActivity.target_type.in_(['roadmap', 'feature']),
+                UserActivity.user_id != user.id,  # Not their own actions
+                UserActivity.target_id.in_(user_roadmap_ids) if user_roadmap_ids else False
+            )
+        ),
+        UserActivity.created_at >= seven_days_ago
+    ).order_by(UserActivity.created_at.desc()).limit(limit).all()
+    
+    notifications = []
+    for activity in activities:
+        # Determine notification type and icon
+        if activity.action_type == 'invited':
+            icon = 'bi-person-plus'
+            type_class = 'notification-invite'
+        elif activity.action_type == 'joined':
+            icon = 'bi-person-check'
+            type_class = 'notification-join'
+        elif activity.action_type == 'created' and activity.target_type == 'roadmap':
+            icon = 'bi-plus-circle'
+            type_class = 'notification-create'
+        elif activity.action_type == 'created' and activity.target_type == 'feature':
+            icon = 'bi-plus-square'
+            type_class = 'notification-feature'
+        elif activity.action_type == 'updated':
+            icon = 'bi-pencil-square'
+            type_class = 'notification-update'
+        elif activity.action_type == 'deleted':
+            icon = 'bi-trash'
+            type_class = 'notification-delete'
+        else:
+            icon = 'bi-bell'
+            type_class = 'notification-general'
+        
+        # Generate notification URL
+        notification_url = None
+        if activity.target_type == 'roadmap' and activity.target_id:
+            notification_url = f"/roadmap/{activity.target_id}"
+        elif activity.target_type == 'feature' and activity.target_id:
+            # Get the roadmap ID for the feature
+            feature = Feature.query.get(activity.target_id)
+            if feature:
+                notification_url = f"/roadmap/{feature.roadmap_id}"
+        
+        # Calculate time ago
+        time_diff = datetime.utcnow() - activity.created_at
+        if time_diff.days > 0:
+            time_ago = f"{time_diff.days}d ago"
+        elif time_diff.seconds > 3600:
+            time_ago = f"{time_diff.seconds // 3600}h ago"
+        elif time_diff.seconds > 60:
+            time_ago = f"{time_diff.seconds // 60}m ago"
+        else:
+            time_ago = "Just now"
+        
+        # Check if notification is unread based on last viewed timestamp
+        last_viewed_str = session.get('notifications_last_viewed')
+        is_unread = True
+        if last_viewed_str:
+            try:
+                last_viewed = datetime.fromisoformat(last_viewed_str)
+                is_unread = activity.created_at > last_viewed
+            except:
+                # If parsing fails, consider it unread
+                is_unread = True
+        
+        notifications.append({
+            'id': activity.id,
+            'title': activity.target_name or 'Unknown',
+            'description': activity.description,
+            'icon': icon,
+            'type_class': type_class,
+            'time_ago': time_ago,
+            'created_at': activity.created_at.isoformat(),
+            'url': notification_url,
+            'is_new': is_unread and time_diff.total_seconds() < 86400  # New if unread and less than 24 hours
+        })
+    
+    return jsonify({
+        'notifications': notifications,
+        'count': len(notifications),
+        'unread_count': sum(1 for n in notifications if n['is_new'])
+    }), 200
+
+# API to mark notifications as viewed (reset unread count)
+@app.route('/api/users/me/notifications/mark-viewed', methods=['POST'])
+@login_required
+def mark_notifications_viewed():
+    user = get_current_user()
+    
+    # Store the last viewed timestamp in user session or database
+    # For simplicity, we'll use session storage
+    session['notifications_last_viewed'] = datetime.utcnow().isoformat()
+    
+    return jsonify({'success': True}), 200
+
 # API to search users by username or email
 @app.route('/api/users/search', methods=['GET'])
 def search_users():
@@ -1321,6 +1439,117 @@ def invite_user_to_roadmap(roadmap_id):
         description=f"Joined roadmap '{roadmap.name}' as {role}",
         metadata={'role': role, 'invited_by': inviter.full_name or inviter.username}
     )
+    
+    # Send email notification to the invited user
+    try:
+        # Fix URL generation for local development
+        if 'localhost' in request.host_url or '127.0.0.1' in request.host_url:
+            roadmap_url = f"http://localhost:5000/roadmap/{roadmap_id}"
+        else:
+            roadmap_url = f"{request.host_url}roadmap/{roadmap_id}"
+            
+        inviter_name = inviter.full_name or inviter.username
+        user_name = user.full_name or user.username
+        
+        # Create email subject
+        subject = f"You've been added to '{roadmap.name}' roadmap"
+        
+        # Create HTML email content
+        html_content = f"""
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff;">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #0056d2, #4f46e5); color: white; padding: 2rem; text-align: center; border-radius: 8px 8px 0 0;">
+                <h1 style="margin: 0; font-size: 28px; font-weight: 600;">
+                    🎯 You're invited to collaborate!
+                </h1>
+                <p style="margin: 10px 0 0 0; opacity: 0.9; font-size: 16px;">
+                    {inviter_name} has added you to a product roadmap
+                </p>
+            </div>
+            
+            <!-- Main Content -->
+            <div style="padding: 2rem; background: #f8f9fa; border-radius: 0 0 8px 8px;">
+                <div style="background: white; padding: 1.5rem; border-radius: 6px; margin-bottom: 1.5rem; border-left: 4px solid #0056d2;">
+                    <h2 style="color: #0056d2; margin: 0 0 1rem 0; font-size: 24px;">
+                        📋 {roadmap.name}
+                    </h2>
+                    {f'<p style="color: #666; margin: 0 0 1rem 0; line-height: 1.6;">{roadmap.description}</p>' if roadmap.description else ''}
+                    
+                    <div style="display: flex; align-items: center; gap: 1rem; margin: 1rem 0;">
+                        <div style="background: #e3f2fd; padding: 0.5rem 1rem; border-radius: 20px; font-size: 14px; font-weight: 600; color: #1976d2;">
+                            👤 Role: {role.title()}
+                        </div>
+                        <div style="background: #e8f5e8; padding: 0.5rem 1rem; border-radius: 20px; font-size: 14px; font-weight: 600; color: #2e7d32;">
+                            📅 Added: {datetime.utcnow().strftime('%B %d, %Y')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin: 1.5rem 0;">
+                    <p style="color: #333; margin: 0 0 1rem 0; font-size: 16px;">
+                        Hi {user_name}! 👋<br>
+                        You now have access to collaborate on this roadmap as a <strong>{role}</strong>.
+                    </p>
+                    
+                    <a href="{roadmap_url}" style="display: inline-block; background: #0056d2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin: 1rem 0;">
+                        🚀 View Roadmap
+                    </a>
+                </div>
+                
+                <!-- Permissions Info -->
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                    <h3 style="color: #856404; margin: 0 0 0.5rem 0; font-size: 16px;">
+                        🔐 Your Access Level: {role.title()}
+                    </h3>
+                    <p style="color: #856404; margin: 0; font-size: 14px; line-height: 1.4;">
+                        {'You can view, edit, and manage all aspects of this roadmap.' if role == 'admin' 
+                         else 'You can view and edit features on this roadmap.' if role == 'member'
+                         else 'You can view this roadmap but cannot make changes.' if role == 'viewer'
+                         else 'You have full control over this roadmap.'}
+                    </p>
+                </div>
+                
+                <!-- Tips -->
+                <div style="background: white; padding: 1rem; border-radius: 6px; border-left: 4px solid #28a745;">
+                    <h3 style="color: #155724; margin: 0 0 0.5rem 0; font-size: 16px;">
+                        💡 Getting Started Tips
+                    </h3>
+                    <ul style="color: #155724; margin: 0; padding-left: 1.2rem; font-size: 14px; line-height: 1.6;">
+                        <li>Click the link above to access the roadmap</li>
+                        <li>Explore existing features and their priorities</li>
+                        <li>Add new features or update existing ones</li>
+                        <li>Use the timeline view to see the roadmap progression</li>
+                    </ul>
+                </div>
+                
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #ddd;">
+                    <p style="color: #666; margin: 0; font-size: 14px;">
+                        Invited by <strong>{inviter_name}</strong> via Product Compass<br>
+                        <a href="{request.host_url}" style="color: #0056d2; text-decoration: none;">Product Compass</a> - Build better products together
+                    </p>
+                </div>
+            </div>
+        </div>
+        """
+        
+        # Send the email
+        success, error = send_mailgun_email(
+            to_email=user.email,
+            subject=subject,
+            html_content=html_content,
+            reply_to=inviter.email if inviter.email else None
+        )
+        
+        if success:
+            print(f"✅ Invitation email sent to {user.email}")
+        else:
+            print(f"⚠️  Failed to send invitation email to {user.email}: {error}")
+            # Don't fail the request if email sending fails
+            
+    except Exception as e:
+        print(f"⚠️  Error sending invitation email: {str(e)}")
+        # Don't fail the request if email sending fails
     
     return jsonify({
         'id': member.id,
@@ -2756,10 +2985,9 @@ if __name__ == '__main__':
             debug=False
         )
     else:
-        # Development settings with HTTPS
+        # Development settings
         app.run(
             host='127.0.0.1',
             port=5000,
-            debug=True,
-            ssl_context='adhoc'  # Enable self-signed SSL for development
+            debug=True
         ) 
