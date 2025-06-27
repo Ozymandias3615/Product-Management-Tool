@@ -3175,6 +3175,33 @@ def init_demo():
         db.session.rollback()
         return jsonify({'error': f'Failed to initialize demo: {str(e)}'}), 500
 
+# Debug endpoint for Firebase configuration
+@app.route('/api/debug/firebase', methods=['GET'])
+def debug_firebase():
+    """Debug endpoint to check Firebase configuration"""
+    try:
+        debug_info = {
+            'firebase_admin_initialized': firebase_app is not None,
+            'firebase_client_config': {
+                'apiKey': os.getenv('FIREBASE_API_KEY', 'NOT_SET'),
+                'authDomain': os.getenv('FIREBASE_AUTH_DOMAIN', 'NOT_SET'),
+                'projectId': os.getenv('FIREBASE_PROJECT_ID', 'NOT_SET'),
+                'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET', 'NOT_SET'),
+                'messagingSenderId': os.getenv('FIREBASE_MESSAGING_SENDER_ID', 'NOT_SET'),
+                'appId': os.getenv('FIREBASE_APP_ID', 'NOT_SET'),
+                'measurementId': os.getenv('FIREBASE_MEASUREMENT_ID', 'NOT_SET')
+            },
+            'firebase_credentials_env': 'SET' if os.getenv('FIREBASE_CREDENTIALS_JSON') else 'NOT_SET',
+            'environment': os.getenv('FLASK_ENV', 'development'),
+            'host': request.host,
+            'url': request.url
+        }
+        
+        return jsonify(debug_info), 200
+        
+    except Exception as e:
+        return jsonify({'error': f'Debug failed: {str(e)}'}), 500
+
 if __name__ == '__main__':
     # Initialize database tables
     with app.app_context():
