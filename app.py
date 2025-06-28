@@ -2590,6 +2590,23 @@ def firebase_config_js():
         'appId': os.getenv('FIREBASE_APP_ID'),
         'measurementId': os.getenv('FIREBASE_MEASUREMENT_ID')
     }
+    
+    # Check if any critical Firebase config is missing
+    missing_configs = [key for key, value in config.items() if not value and key in ['apiKey', 'authDomain', 'projectId']]
+    if missing_configs:
+        print(f"Warning: Missing Firebase configuration: {missing_configs}")
+        print("Available Firebase environment variables:")
+        for key in config.keys():
+            value = config[key]
+            print(f"  {key.upper()}: {'✓' if value else '✗'}")
+        
+        # Return a disabled Firebase config
+        js = """// Firebase configuration not available
+console.warn('Firebase not configured - authentication features disabled');
+window.firebaseConfigured = false;
+"""
+        return Response(js, mimetype='application/javascript')
+    
     js = f"""// Your web app's Firebase configuration
 const firebaseConfig = {{
     apiKey: "{config['apiKey']}",
@@ -2600,7 +2617,15 @@ const firebaseConfig = {{
     appId: "{config['appId']}",
     measurementId: "{config['measurementId']}"
 }};
-firebase.initializeApp(firebaseConfig);
+
+try {{
+    firebase.initializeApp(firebaseConfig);
+    window.firebaseConfigured = true;
+    console.log('Firebase initialized successfully');
+}} catch (error) {{
+    console.error('Firebase initialization failed:', error);
+    window.firebaseConfigured = false;
+}}
 """
     return Response(js, mimetype='application/javascript')
 
@@ -3188,21 +3213,47 @@ def init_demo():
 def debug_firebase():
     """Debug endpoint to check Firebase configuration"""
     try:
+        # Helper function to show if value is set (but mask it for security)
+        def mask_value(value, show_prefix=True):
+            if not value or value == 'NOT_SET':
+                return 'NOT_SET'
+            if show_prefix and len(value) > 10:
+                return f"{value[:10]}...***"
+            return "***SET***"
+        
+        firebase_config = {
+            'apiKey': os.getenv('FIREBASE_API_KEY'),
+            'authDomain': os.getenv('FIREBASE_AUTH_DOMAIN'),
+            'projectId': os.getenv('FIREBASE_PROJECT_ID'),
+            'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET'),
+            'messagingSenderId': os.getenv('FIREBASE_MESSAGING_SENDER_ID'),
+            'appId': os.getenv('FIREBASE_APP_ID'),
+            'measurementId': os.getenv('FIREBASE_MEASUREMENT_ID')
+        }
+        
         debug_info = {
             'firebase_admin_initialized': firebase_app is not None,
-            'firebase_client_config': {
-                'apiKey': os.getenv('FIREBASE_API_KEY', 'NOT_SET'),
-                'authDomain': os.getenv('FIREBASE_AUTH_DOMAIN', 'NOT_SET'),
-                'projectId': os.getenv('FIREBASE_PROJECT_ID', 'NOT_SET'),
-                'storageBucket': os.getenv('FIREBASE_STORAGE_BUCKET', 'NOT_SET'),
-                'messagingSenderId': os.getenv('FIREBASE_MESSAGING_SENDER_ID', 'NOT_SET'),
-                'appId': os.getenv('FIREBASE_APP_ID', 'NOT_SET'),
-                'measurementId': os.getenv('FIREBASE_MEASUREMENT_ID', 'NOT_SET')
+            'firebase_client_config_status': {
+                key: mask_value(value, key not in ['apiKey', 'appId']) 
+                for key, value in firebase_config.items()
             },
-            'firebase_credentials_env': 'SET' if os.getenv('FIREBASE_CREDENTIALS_JSON') else 'NOT_SET',
+            'missing_required_config': [
+                key for key, value in firebase_config.items() 
+                if not value and key in ['apiKey', 'authDomain', 'projectId']
+            ],
+            'all_environment_variables': {
+                'FIREBASE_CREDENTIALS_JSON': 'SET' if os.getenv('FIREBASE_CREDENTIALS_JSON') else 'NOT_SET',
+                'FIREBASE_API_KEY': 'SET' if os.getenv('FIREBASE_API_KEY') else 'NOT_SET',
+                'FIREBASE_AUTH_DOMAIN': 'SET' if os.getenv('FIREBASE_AUTH_DOMAIN') else 'NOT_SET',
+                'FIREBASE_PROJECT_ID': 'SET' if os.getenv('FIREBASE_PROJECT_ID') else 'NOT_SET',
+                'FIREBASE_STORAGE_BUCKET': 'SET' if os.getenv('FIREBASE_STORAGE_BUCKET') else 'NOT_SET',
+                'FIREBASE_MESSAGING_SENDER_ID': 'SET' if os.getenv('FIREBASE_MESSAGING_SENDER_ID') else 'NOT_SET',
+                'FIREBASE_APP_ID': 'SET' if os.getenv('FIREBASE_APP_ID') else 'NOT_SET',
+                'FIREBASE_MEASUREMENT_ID': 'SET' if os.getenv('FIREBASE_MEASUREMENT_ID') else 'NOT_SET'
+            },
             'environment': os.getenv('FLASK_ENV', 'development'),
             'host': request.host,
-            'url': request.url
+            'config_route_url': f"{request.host_url}js/firebase-config.js"
         }
         
         return jsonify(debug_info), 200
