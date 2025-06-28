@@ -138,47 +138,134 @@
       <div class="container">
         <h2 class="fw-bold text-center mb-5">Who It's For</h2>
         <div class="row gx-4 gy-5 justify-content-center">
+          <!-- Product Managers -->
           <div class="col-6 col-md-3">
-            <div class="card h-100 border-0 shadow-sm interactive-card who-card position-relative overflow-hidden">
+            <div class="card h-100 border-0 shadow-sm interactive-card who-card expandable-card" data-card="product-managers">
               <img src="{{ url_for('static', filename='img/product-manager.jpg') }}" class="card-img-top" alt="Product Managers">
               <div class="card-body d-flex flex-column text-center">
                 <h5 class="card-title">Product Managers</h5>
                 <p class="card-text small text-secondary">Translate your strategic vision into a clear, actionable roadmap.</p>
-                <a href="#" class="btn btn-outline-primary mt-auto">Learn More</a>
-                <a href="#" class="stretched-link"></a>
+                <button type="button" class="btn btn-outline-primary mt-auto learn-more-btn">
+                  <span class="btn-text">Learn More</span>
+                  <i class="bi bi-chevron-down expand-icon"></i>
+                </button>
+                
+                <!-- Expandable Content -->
+                <div class="expanded-content" id="content-product-managers">
+                  <div class="expanded-details mt-3 p-3 bg-light rounded">
+                    <h6 class="fw-bold mb-3">Perfect for Product Managers who need to:</h6>
+                    <ul class="list-unstyled text-start small">
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i>Create comprehensive product roadmaps</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i>Align stakeholders on priorities</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i>Track feature development progress</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i>Manage release planning</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-primary me-2"></i>Communicate strategy effectively</li>
+                    </ul>
+                    <div class="d-flex justify-content-center mt-3">
+                      <a href="/demo" class="btn btn-primary btn-sm me-2">Try Demo</a>
+                      <a href="/register" class="btn btn-outline-primary btn-sm">Get Started</a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+          
+          <!-- Startup Founders -->
           <div class="col-6 col-md-3">
-            <div class="card h-100 border-0 shadow-sm interactive-card who-card position-relative overflow-hidden">
+            <div class="card h-100 border-0 shadow-sm interactive-card who-card expandable-card" data-card="startup-founders">
               <img src="{{ url_for('static', filename='img/startup.jpg') }}" class="card-img-top" alt="Startup Founders">
               <div class="card-body d-flex flex-column text-center">
                 <h5 class="card-title">Startup Founders</h5>
                 <p class="card-text small text-secondary">Accelerate your product launches with confidence and alignment.</p>
-                <a href="#" class="btn btn-outline-primary mt-auto">Learn More</a>
-                <a href="#" class="stretched-link"></a>
+                <button type="button" class="btn btn-outline-primary mt-auto learn-more-btn">
+                  <span class="btn-text">Learn More</span>
+                  <i class="bi bi-chevron-down expand-icon"></i>
+                </button>
+                
+                <!-- Expandable Content -->
+                <div class="expanded-content" id="content-startup-founders">
+                  <div class="expanded-details mt-3 p-3 bg-light rounded">
+                    <h6 class="fw-bold mb-3">Essential for Startup Founders who want to:</h6>
+                    <ul class="list-unstyled text-start small">
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Launch products faster</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Validate ideas with clear timelines</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Coordinate small but mighty teams</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Pitch with professional roadmaps</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i>Scale planning as they grow</li>
+                    </ul>
+                    <div class="d-flex justify-content-center mt-3">
+                      <a href="/demo" class="btn btn-success btn-sm me-2">Try Demo</a>
+                      <a href="/register" class="btn btn-outline-success btn-sm">Get Started</a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+          
+          <!-- Agile Teams -->
           <div class="col-6 col-md-3">
-            <div class="card h-100 border-0 shadow-sm interactive-card who-card position-relative overflow-hidden">
+            <div class="card h-100 border-0 shadow-sm interactive-card who-card expandable-card" data-card="agile-teams">
               <img src="{{ url_for('static', filename='img/agile-team.jpg') }}" class="card-img-top" alt="Agile Teams">
               <div class="card-body d-flex flex-column text-center">
                 <h5 class="card-title">Agile Teams</h5>
                 <p class="card-text small text-secondary">Visualize tasks and workflows in a dynamic Kanban board.</p>
-                <a href="#" class="btn btn-outline-primary mt-auto">Learn More</a>
-                <a href="#" class="stretched-link"></a>
+                <button type="button" class="btn btn-outline-primary mt-auto learn-more-btn">
+                  <span class="btn-text">Learn More</span>
+                  <i class="bi bi-chevron-down expand-icon"></i>
+                </button>
+                
+                <!-- Expandable Content -->
+                <div class="expanded-content" id="content-agile-teams">
+                  <div class="expanded-details mt-3 p-3 bg-light rounded">
+                    <h6 class="fw-bold mb-3">Built for Agile Teams that need to:</h6>
+                    <ul class="list-unstyled text-start small">
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-warning me-2"></i>Sprint planning and tracking</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-warning me-2"></i>Kanban workflow management</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-warning me-2"></i>Real-time collaboration</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-warning me-2"></i>Backlog prioritization</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-warning me-2"></i>Retrospective insights</li>
+                    </ul>
+                    <div class="d-flex justify-content-center mt-3">
+                      <a href="/demo" class="btn btn-warning btn-sm me-2">Try Demo</a>
+                      <a href="/register" class="btn btn-outline-warning btn-sm">Get Started</a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+          
+          <!-- Project Leads -->
           <div class="col-6 col-md-3">
-            <div class="card h-100 border-0 shadow-sm interactive-card who-card position-relative overflow-hidden">
+            <div class="card h-100 border-0 shadow-sm interactive-card who-card expandable-card" data-card="project-leads">
               <img src="{{ url_for('static', filename='img/project-lead.jpg') }}" class="card-img-top" alt="Project Leads">
               <div class="card-body d-flex flex-column text-center">
                 <h5 class="card-title">Project Leads</h5>
                 <p class="card-text small text-secondary">Keep stakeholders informed with live roadmap updates.</p>
-                <a href="#" class="btn btn-outline-primary mt-auto">Learn More</a>
-                <a href="#" class="stretched-link"></a>
+                <button type="button" class="btn btn-outline-primary mt-auto learn-more-btn">
+                  <span class="btn-text">Learn More</span>
+                  <i class="bi bi-chevron-down expand-icon"></i>
+                </button>
+                
+                <!-- Expandable Content -->
+                <div class="expanded-content" id="content-project-leads">
+                  <div class="expanded-details mt-3 p-3 bg-light rounded">
+                    <h6 class="fw-bold mb-3">Designed for Project Leads who must:</h6>
+                    <ul class="list-unstyled text-start small">
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-info me-2"></i>Coordinate cross-functional teams</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-info me-2"></i>Report progress to executives</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-info me-2"></i>Manage multiple project timelines</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-info me-2"></i>Share updates with stakeholders</li>
+                      <li class="mb-2"><i class="bi bi-check-circle-fill text-info me-2"></i>Export professional reports</li>
+                    </ul>
+                    <div class="d-flex justify-content-center mt-3">
+                      <a href="/demo" class="btn btn-info btn-sm me-2">Try Demo</a>
+                      <a href="/register" class="btn btn-outline-info btn-sm">Get Started</a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -244,6 +331,85 @@
   color: #6f42c1 !important;
 }
 
+/* Expandable Cards Styles */
+.expandable-card {
+  transition: all 0.3s ease;
+}
+
+.expandable-card.expanded {
+  transform: scale(1.02);
+  z-index: 10;
+  position: relative;
+}
+
+.learn-more-btn {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.learn-more-btn:hover {
+  transform: translateY(-2px);
+}
+
+.expand-icon {
+  transition: transform 0.3s ease;
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.expanded .expand-icon {
+  transform: rotate(180deg);
+}
+
+.expanded-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease-out, opacity 0.3s ease-out;
+  opacity: 0;
+}
+
+.expanded-content.show {
+  max-height: 400px;
+  opacity: 1;
+  transition: max-height 0.4s ease-in, opacity 0.3s ease-in;
+}
+
+.expanded-details {
+  animation: fadeInUp 0.5s ease-out;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 1px solid #dee2e6;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.who-card {
+  transition: all 0.3s ease;
+}
+
+.who-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.who-card .card-img-top {
+  height: 200px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.who-card:hover .card-img-top {
+  transform: scale(1.05);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .features-section {
@@ -261,10 +427,117 @@
   .feature-icon {
     font-size: 2.5rem;
   }
+  
+  .expandable-card.expanded {
+    transform: none;
+  }
+  
+  .who-card .card-img-top {
+    height: 150px;
+  }
+  
+  .expanded-details {
+    padding: 1rem !important;
+  }
 }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/landing.js') }}"></script>
+<script>
+// Backup inline JavaScript to ensure functionality
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Inline script loaded - checking for elements...');
+  
+  const expandableCards = document.querySelectorAll('.expandable-card');
+  const learnMoreButtons = document.querySelectorAll('.learn-more-btn');
+  
+  console.log('Inline check - Found', expandableCards.length, 'expandable cards');
+  console.log('Inline check - Found', learnMoreButtons.length, 'learn more buttons');
+  
+  // If the external file didn't work, use inline functionality
+  if (typeof toggleCard === 'undefined') {
+    console.log('toggleCard function not found, defining inline...');
+    
+    window.toggleCard = function(cardId, event) {
+      console.log('Inline toggleCard called for:', cardId);
+      
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      
+      const card = document.querySelector(`[data-card="${cardId}"]`);
+      const content = document.getElementById(`content-${cardId}`);
+      const button = card ? card.querySelector('.learn-more-btn') : null;
+      const buttonText = button ? button.querySelector('.btn-text') : null;
+      const expandIcon = button ? button.querySelector('.expand-icon') : null;
+      
+      if (!card || !content || !button || !buttonText || !expandIcon) {
+        console.error('Missing elements for card:', cardId);
+        return false;
+      }
+      
+      // Close other cards
+      document.querySelectorAll('.expandable-card.expanded').forEach(otherCard => {
+        if (otherCard !== card) {
+          const otherCardId = otherCard.getAttribute('data-card');
+          const otherContent = document.getElementById(`content-${otherCardId}`);
+          const otherButton = otherCard.querySelector('.learn-more-btn');
+          const otherButtonText = otherButton.querySelector('.btn-text');
+          const otherExpandIcon = otherButton.querySelector('.expand-icon');
+          
+          otherCard.classList.remove('expanded');
+          otherContent.classList.remove('show');
+          otherButtonText.textContent = 'Learn More';
+          otherExpandIcon.style.transform = 'rotate(0deg)';
+        }
+      });
+      
+      // Toggle current card
+      if (card.classList.contains('expanded')) {
+        card.classList.remove('expanded');
+        content.classList.remove('show');
+        buttonText.textContent = 'Learn More';
+        expandIcon.style.transform = 'rotate(0deg)';
+      } else {
+        card.classList.add('expanded');
+        content.classList.add('show');
+        buttonText.textContent = 'Show Less';
+        expandIcon.style.transform = 'rotate(180deg)';
+        
+        setTimeout(() => {
+          const cardRect = card.getBoundingClientRect();
+          const windowHeight = window.innerHeight;
+          
+          if (cardRect.bottom > windowHeight || cardRect.top < 100) {
+            card.scrollIntoView({ 
+              behavior: 'smooth', 
+              block: 'center' 
+            });
+          }
+        }, 200);
+      }
+      
+      return false;
+    };
+  }
+  
+  // Add event listeners to buttons
+  learnMoreButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const card = this.closest('.expandable-card');
+      if (card) {
+        const cardId = card.getAttribute('data-card');
+        console.log('Button clicked for card:', cardId);
+        toggleCard(cardId, e);
+      }
+    });
+  });
+});
+</script>
 {% endblock %} 
