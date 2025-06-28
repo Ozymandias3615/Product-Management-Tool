@@ -350,7 +350,8 @@ def send_mailgun_email(to_email, subject, html_content, text_content=None, reply
     """Send email using Mailgun API with enhanced deliverability"""
     try:
         if not MAILGUN_API_KEY or not MAILGUN_DOMAIN:
-            raise Exception("Mailgun API key or domain not configured")
+            print("Warning: Mailgun not configured - email functionality disabled")
+            return False, "Email service not configured"
         
         url = f"{MAILGUN_BASE_URL}/{MAILGUN_DOMAIN}/messages"
         
@@ -1967,10 +1968,17 @@ try:
         cred_dict = json.loads(firebase_creds)
         cred = credentials.Certificate(cred_dict)
         firebase_app = initialize_app(cred)
+        print("Firebase initialized successfully with environment credentials")
     else:
-        # Fallback to file (for local development)
-        cred = credentials.Certificate('firebase-credentials.json')
-        firebase_app = initialize_app(cred)
+        # Try file fallback only if it exists (for local development)
+        import os.path
+        if os.path.isfile('firebase-credentials.json'):
+            cred = credentials.Certificate('firebase-credentials.json')
+            firebase_app = initialize_app(cred)
+            print("Firebase initialized successfully with credentials file")
+        else:
+            print("No Firebase credentials found - Firebase features will be disabled")
+            firebase_app = None
 except Exception as e:
     print(f"Warning: Firebase initialization failed: {e}")
     firebase_app = None
