@@ -356,8 +356,12 @@ def send_sendgrid_email(to_email, subject, html_content, text_content=None, repl
         # Generate basic text version from HTML if not provided
         if not text_content:
             import re
+            # Remove HTML tags
             text_version = re.sub('<[^<]+?>', '', html_content)
+            # Clean up whitespace and fix formatting
             text_version = re.sub(r'\s+', ' ', text_version).strip()
+            # Replace common HTML entities
+            text_version = text_version.replace('&nbsp;', ' ').replace('&amp;', '&')
             text_content = text_version
         
         # Create the email message
@@ -2367,7 +2371,7 @@ def submit_contact_form():
         # Send notification email to admin with improved headers
         success1, error1 = send_sendgrid_email(
             to_email='productcompass12@gmail.com',
-            subject=f"[Product Compass] New Contact: {subject}",
+            subject=f"New contact inquiry: {subject}",
             html_content=notification_html,
             reply_to=email  # Set reply-to as the contact form submitter
         )
