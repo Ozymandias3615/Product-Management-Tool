@@ -53,8 +53,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # SendGrid configuration
 SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
-MAIL_FROM_ADDRESS = os.getenv('MAIL_FROM_ADDRESS', 'noreply@product-compass.onrender.com')
-MAIL_FROM_NAME = os.getenv('MAIL_FROM_NAME', 'Product Compass')
+MAIL_FROM_ADDRESS = 'productcompass12@gmail.com'
+MAIL_FROM_NAME = 'Product Compass'
 
 # Initialize extensions
 db = SQLAlchemy(app)
@@ -2366,7 +2366,7 @@ def submit_contact_form():
         
         # Send notification email to admin with improved headers
         success1, error1 = send_sendgrid_email(
-            to_email=os.getenv('CONTACT_EMAIL', 'n.abbiw10@gmail.com'),
+            to_email='productcompass12@gmail.com',
             subject=f"[Product Compass] New Contact: {subject}",
             html_content=notification_html,
             reply_to=email  # Set reply-to as the contact form submitter
