@@ -9,6 +9,8 @@ import io
 import base64
 import requests
 from dotenv import load_dotenv
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -49,11 +51,9 @@ if database_url and database_url.startswith('postgres://'):
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Mailgun configuration
-MAILGUN_API_KEY = os.getenv('MAILGUN_API_KEY')
-MAILGUN_DOMAIN = os.getenv('MAILGUN_DOMAIN')
-MAILGUN_BASE_URL = os.getenv('MAILGUN_BASE_URL', 'https://api.mailgun.net/v3')
-MAIL_FROM_ADDRESS = os.getenv('MAIL_FROM_ADDRESS', 'noreply@sandbox-123.mailgun.org')
+# SendGrid configuration
+SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
+MAIL_FROM_ADDRESS = os.getenv('MAIL_FROM_ADDRESS', 'noreply@product-compass.onrender.com')
 MAIL_FROM_NAME = os.getenv('MAIL_FROM_NAME', 'Product Compass')
 
 # Initialize extensions
@@ -345,57 +345,42 @@ def init_db():
     with app.app_context():
         db.create_all()
 
-# Helper function to send emails via Mailgun
-def send_mailgun_email(to_email, subject, html_content, text_content=None, reply_to=None):
-    """Send email using Mailgun API with enhanced deliverability"""
+# Helper function to send emails via SendGrid
+def send_sendgrid_email(to_email, subject, html_content, text_content=None, reply_to=None):
+    """Send email using SendGrid API with enhanced deliverability"""
     try:
-        if not MAILGUN_API_KEY or not MAILGUN_DOMAIN:
-            print("Warning: Mailgun not configured - email functionality disabled")
+        if not SENDGRID_API_KEY:
+            print("Warning: SendGrid not configured - email functionality disabled")
             return False, "Email service not configured"
         
-        url = f"{MAILGUN_BASE_URL}/{MAILGUN_DOMAIN}/messages"
-        
-        # Enhanced data with anti-spam headers
-        data = {
-            'from': f"{MAIL_FROM_NAME} <{MAIL_FROM_ADDRESS}>",
-            'to': to_email,
-            'subject': subject,
-            'html': html_content,
-            # Anti-spam headers
-            'h:X-Mailgun-Tag': 'contact-form',
-            'h:X-Mailgun-Track': 'yes',
-            'h:X-Mailgun-Track-Opens': 'yes',
-            'h:List-Unsubscribe': f'<mailto:unsubscribe@{MAILGUN_DOMAIN.split(".", 1)[-1] if "." in MAILGUN_DOMAIN else MAILGUN_DOMAIN}>',
-            'h:X-Priority': '3',
-            'h:X-MSMail-Priority': 'Normal',
-            'h:Importance': 'Normal'
-        }
-        
-        # Add text version if provided
-        if text_content:
-            data['text'] = text_content
-        else:
-            # Generate basic text version from HTML
+        # Generate basic text version from HTML if not provided
+        if not text_content:
             import re
             text_version = re.sub('<[^<]+?>', '', html_content)
             text_version = re.sub(r'\s+', ' ', text_version).strip()
-            data['text'] = text_version
+            text_content = text_version
+        
+        # Create the email message
+        message = Mail(
+            from_email=(MAIL_FROM_ADDRESS, MAIL_FROM_NAME),
+            to_emails=to_email,
+            subject=subject,
+            html_content=html_content,
+            plain_text_content=text_content
+        )
         
         # Add reply-to if provided
         if reply_to:
-            data['h:Reply-To'] = reply_to
+            message.reply_to = reply_to
         
-        response = requests.post(
-            url,
-            auth=('api', MAILGUN_API_KEY),
-            data=data,
-            timeout=10
-        )
+        # Send email using SendGrid
+        sg = SendGridAPIClient(api_key=SENDGRID_API_KEY)
+        response = sg.send(message)
         
-        if response.status_code == 200:
+        if response.status_code in [200, 201, 202]:
             return True, "Email sent successfully"
         else:
-            return False, f"Mailgun API error: {response.status_code} - {response.text}"
+            return False, f"SendGrid API error: {response.status_code} - {response.body}"
             
     except Exception as e:
         return False, f"Email sending failed: {str(e)}"
@@ -1535,7 +1520,7 @@ def invite_user_to_roadmap(roadmap_id):
         """
         
         # Send the email
-        success, error = send_mailgun_email(
+        success, error = send_sendgrid_email(
             to_email=user.email,
             subject=subject,
             html_content=html_content,
@@ -2380,7 +2365,7 @@ def submit_contact_form():
         """
         
         # Send notification email to admin with improved headers
-        success1, error1 = send_mailgun_email(
+        success1, error1 = send_sendgrid_email(
             to_email=os.getenv('CONTACT_EMAIL', 'n.abbiw10@gmail.com'),
             subject=f"[Product Compass] New Contact: {subject}",
             html_content=notification_html,
@@ -2440,7 +2425,7 @@ def submit_contact_form():
         """
         
         # Send confirmation email to the sender
-        success2, error2 = send_mailgun_email(
+        success2, error2 = send_sendgrid_email(
             to_email=email,
             subject="Thank you for contacting Product Compass",
             html_content=confirmation_html
