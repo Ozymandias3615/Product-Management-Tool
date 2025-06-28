@@ -63,8 +63,14 @@ form.addEventListener('submit', async (e) => {
       });
       
       if (!registerResponse.ok) {
-        const error = await registerResponse.json();
-        throw new Error(error.error || 'Registration failed');
+        let errorMessage = 'Registration failed';
+        try {
+          const error = await registerResponse.json();
+          errorMessage = error.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = `Server error (${registerResponse.status}): Unable to process registration`;
+        }
+        throw new Error(errorMessage);
       }
       
       // Auto-login after successful registration
@@ -78,8 +84,14 @@ form.addEventListener('submit', async (e) => {
       });
       
       if (!loginResponse.ok) {
-        const error = await loginResponse.json();
-        throw new Error(error.error || 'Login failed after registration');
+        let errorMessage = 'Login failed after registration';
+        try {
+          const error = await loginResponse.json();
+          errorMessage = error.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = `Server error (${loginResponse.status}): Unable to login after registration`;
+        }
+        throw new Error(errorMessage);
       }
       
       // Redirect to roadmaps
@@ -97,8 +109,14 @@ form.addEventListener('submit', async (e) => {
       });
       
       if (!loginResponse.ok) {
-        const error = await loginResponse.json();
-        throw new Error(error.error || 'Login failed');
+        let errorMessage = 'Login failed';
+        try {
+          const error = await loginResponse.json();
+          errorMessage = error.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = `Server error (${loginResponse.status}): Unable to process login`;
+        }
+        throw new Error(errorMessage);
       }
       
       // Redirect to roadmaps
@@ -117,9 +135,9 @@ googleBtn.addEventListener('click', async () => {
   clearError();
   
   try {
-    // Check if Firebase is available
-    if (typeof firebase !== 'undefined' && firebase.auth) {
-  const provider = new firebase.auth.GoogleAuthProvider();
+    // Check if Firebase is available and properly configured
+    if (typeof firebase !== 'undefined' && firebase.auth && window.firebaseConfigured !== false) {
+      const provider = new firebase.auth.GoogleAuthProvider();
       const result = await firebase.auth().signInWithPopup(provider);
       const user = result.user;
       
@@ -138,8 +156,21 @@ googleBtn.addEventListener('click', async () => {
       });
       
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Google login failed');
+        let errorMessage = 'Google login failed';
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch (parseError) {
+          // If response is not JSON (e.g., HTML error page), get text instead
+          try {
+            const errorText = await response.text();
+            console.error('Non-JSON error response:', errorText);
+            errorMessage = `Server error (${response.status}): Unable to process Google login`;
+          } catch (textError) {
+            errorMessage = `Server error (${response.status}): Connection failed`;
+          }
+        }
+        throw new Error(errorMessage);
       }
       
       // Redirect to roadmaps
