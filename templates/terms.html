@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="page-hero section-wrapper d-flex align-items-center justify-content-center text-center text-white position-relative overflow-hidden rounded-4 shadow-sm">
+  <div data-aos="zoom-in">
+    <h1 class="display-4 fw-bold mb-3">Terms &amp; Conditions</h1>
+    <p class="lead mb-0">Last updated: {{ last_updated }}</p>
+  </div>
+</section>
+
+<!-- Terms Content -->
+<section class="py-5 bg-light section-wrapper rounded-4 shadow-sm">
+  <div class="container">
+    <div class="row g-4">
+      {% macro term_item(num, title, body) %}
+      <div class="col-md-6" data-aos="fade-up" data-aos-delay="{{ num * 50 }}">
+        <div class="term-card h-100 p-4 rounded-4 shadow-sm bg-white">
+          <div class="d-flex align-items-start mb-3">
+            <div class="term-icon flex-shrink-0 me-3">
+              <span class="badge bg-primary rounded-circle fs-5">{{ num }}</span>
+            </div>
+            <h5 class="fw-semibold mb-0">{{ title }}</h5>
+          </div>
+          <p class="mb-0 text-muted small">{{ body | safe }}</p>
+        </div>
+      </div>
+      {% endmacro %}
+
+      {{ term_item(1, 'Acceptance of Terms', 'By accessing or using Product Compass (“Service”), you agree to be bound by these Terms &amp; Conditions and our <a href="/privacy">Privacy Policy</a>. If you do not agree, discontinue use immediately.') }}
+      {{ term_item(2, 'Accounts &amp; Eligibility', '<ul class="mb-0"><li>You must be at least 13 years old to create an account.</li><li>You are responsible for all activities under your credentials.</li><li>We may suspend or terminate accounts that violate these Terms or applicable law.</li></ul>') }}
+      {{ term_item(3, 'Subscription &amp; Payment', 'The core roadmap features are free during beta. Future paid plans will be announced with at least 30 days’ notice and an opt-in process; you will never be charged automatically without consent.') }}
+      {{ term_item(4, 'User-Generated Content', 'You retain ownership of roadmaps, personas, feedback, comments, and files you upload. You grant us a non-exclusive license to host and process this content solely to operate and improve the Service.') }}
+      {{ term_item(5, 'Collaboration &amp; Sharing', 'When you share a roadmap link or invite teammates, you acknowledge that anyone with the link (or added to the team) may view or edit according to the permissions you choose.') }}
+      {{ term_item(6, 'Prohibited Activities', '<ul class="mb-0"><li>Reverse-engineering or scraping the Service.</li><li>Uploading malware or infringing content.</li><li>Using the Service for illegal or harmful purposes.</li></ul>') }}
+      {{ term_item(7, 'Service Availability', 'We aim for 99.9% uptime but may suspend the Service for maintenance, upgrades, or unforeseen outages. Notices for planned downtime will be posted at least 24 hours in advance when feasible.') }}
+      {{ term_item(8, 'Limitation of Liability', 'To the fullest extent permitted by law, Product Compass and its owners are not liable for indirect, incidental, or consequential damages arising from your use of the Service.') }}
+      {{ term_item(9, 'Indemnification', 'You agree to indemnify and hold Product Compass, its affiliates, and employees harmless from any claim or demand arising out of your misuse of the Service or violation of these Terms.') }}
+      {{ term_item(10, 'Modifications to Terms', 'We may update these Terms from time to time. Significant changes will be communicated via email or in-app banner at least 7 days before they take effect. Continued use constitutes acceptance.') }}
+      {{ term_item(11, 'Governing Law', 'These Terms are governed by the laws of the State of Delaware, USA, without regard to conflict-of-law provisions. Any disputes shall be resolved in the courts located in Delaware.') }}
+      {{ term_item(12, 'Contact', 'Questions about these Terms? Email <a href="mailto:n.abbiw10@gmail.com">n.abbiw10@gmail.com</a> or reach out via our <a href="/contact">contact form</a>.') }}
+    </div>
+  </div>
+</section>
+
+<style>
+.page-hero {
+  min-height: 30vh;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #4f46e5 100%);
+  margin-bottom: 3rem;
+}
+.page-hero p {
+  color: #ffffff !important;
+}
+.term-card {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.term-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+}
+.term-icon .badge {
+  width: 42px;
+  height: 42px;
+  line-height: 30px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+@media (max-width: 767.98px) {
+  .page-hero { min-height: 35vh; }
+}
+
+/* Shared wrapper for consistent widths */
+.section-wrapper {
+  width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+}
+</style>
+{% endblock %} 

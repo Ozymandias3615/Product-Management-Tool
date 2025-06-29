@@ -3860,6 +3860,16 @@ def debug_firebase():
     except Exception as e:
         return jsonify({'error': f'Debug failed: {str(e)}'}), 500
 
+@app.route('/terms')
+def terms():
+    from datetime import datetime
+    return render_template('terms.html', last_updated=datetime.utcnow().strftime('%B %d, %Y'))
+
+@app.route('/privacy')
+def privacy():
+    from datetime import datetime
+    return render_template('privacy.html', last_updated=datetime.utcnow().strftime('%B %d, %Y'))
+
 if __name__ == '__main__':
     # Initialize database tables
     with app.app_context():

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="page-hero section-wrapper d-flex align-items-center justify-content-center text-center text-white position-relative overflow-hidden rounded-4 shadow-sm">
+  <div data-aos="zoom-in">
+    <h1 class="display-4 fw-bold mb-3">Privacy Policy</h1>
+    <p class="lead mb-0">Last updated: {{ last_updated }}</p>
+  </div>
+</section>
+
+<!-- Gap handled by .page-hero margin-bottom in shared style -->
+
+<!-- Privacy Content -->
+<section class="py-5 bg-light section-wrapper rounded-4 shadow-sm">
+  <div class="container">
+    <div class="row g-4">
+      {% macro item(num, title, body) %}
+      <div class="col-md-6" data-aos="fade-up" data-aos-delay="{{ num * 50 }}">
+        <div class="term-card h-100 p-4 rounded-4 shadow-sm bg-white">
+          <div class="d-flex align-items-start mb-3">
+            <div class="term-icon flex-shrink-0 me-3">
+              <span class="badge bg-primary rounded-circle fs-5">{{ num }}</span>
+            </div>
+            <h5 class="fw-semibold mb-0">{{ title }}</h5>
+          </div>
+          <p class="mb-0 text-muted small">{{ body | safe }}</p>
+        </div>
+      </div>
+      {% endmacro %}
+
+      {{ item(1, 'Information We Collect', '<ul class="mb-0"><li><strong>Account Details:</strong> Full name, email address, profile photo (optional) collected when you register or sign in with Google.</li><li><strong>Roadmap &amp; Project Data:</strong> Roadmaps, features, personas, comments, and files you upload.</li><li><strong>Usage Data:</strong> Pages visited, interactions (e.g., clicks, edits), and referring pages.</li><li><strong>Device &amp; Log Data:</strong> IP address, browser type, operating system, and timestamps.</li><li><strong>Cookies &amp; Local Storage:</strong> Authentication tokens and preference settings.</li></ul>') }}
+      {{ item(2, 'How We Use Information', '<ul class="mb-0"><li>Provide, secure, and maintain the core Product Compass features (roadmap editing, sharing, collaboration).</li><li>Personalize your experience, such as remembering your last viewed roadmap.</li><li>Send service emails (e.g., invites, notifications) via SendGrid.</li><li>Monitor performance, diagnose issues, and plan improvements.</li><li>Comply with legal obligations and enforce our Terms &amp; Conditions.</li></ul>') }}
+      {{ item(3, 'Legal Bases', 'We process personal data under the following bases: <ul class="mb-0"><li><em>Contractual necessity</em> &mdash; to deliver the service you requested.</li><li><em>Legitimate interests</em> &mdash; analytics, fraud-prevention, and product improvement.</li><li><em>Consent</em> &mdash; for optional marketing messages.</li></ul>') }}
+      {{ item(4, 'Cookies &amp; Tracking', 'We use first-party cookies for login sessions and CSRF protection, and Google Analytics cookies for aggregated usage statistics. You can disable non-essential cookies via your browser without impacting core functionality, but analytics accuracy will decrease.') }}
+      {{ item(5, 'Third-Party Services', '<ul class="mb-0"><li><strong>Firebase Authentication</strong> — manages Google sign-in and issues ID tokens.</li><li><strong>SendGrid</strong> — sends transactional emails (invites, password resets).</li><li><strong>Google Analytics</strong> — provides anonymous traffic insights.</li><li><strong>Cloud Hosting (Render / Heroku)</strong> — stores application servers and databases.</li></ul> We share your data with these providers only to the extent necessary for them to perform their services.') }}
+      {{ item(6, 'Data Security', 'Data in transit is protected with TLS 1.2+. Roadmap attachments are stored with server-side encryption. Access within our company is restricted to authorized personnel on a need-to-know basis.') }}
+      {{ item(7, 'Data Retention', 'Roadmap content and account data remain until you delete them or request account deletion. Backups are kept for up to 30 days before automatic purge.') }}
+      {{ item(8, 'Your Rights', 'You can access, export, correct, or delete your personal data from the <a href="/profile">Profile</a> page, or by emailing us. You may also object to certain processing (e.g., marketing emails).') }}
+      {{ item(9, 'International Transfers', 'We are based in the United States. If you reside outside the U.S., your data will be transferred and processed here under applicable data-transfer safeguards (e.g., Standard Contractual Clauses).') }}
+      {{ item(10, 'Children\'s Privacy', 'Product Compass is intended for users aged 13 and older. We do not knowingly collect data from children under 13. If we become aware of such data, we will delete it.') }}
+      {{ item(11, 'Changes to This Policy', 'Substantive changes will be announced via in-app banner or email at least 7 days before they take effect.') }}
+      {{ item(12, 'Contact Us', 'For privacy questions or data requests, please email <a href="mailto:n.abbiw10@gmail.com">n.abbiw10@gmail.com</a> or use our <a href="/contact">contact form</a>.') }}
+    </div>
+  </div>
+</section>
+
+<style>
+.page-hero {
+  min-height: 30vh;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #4f46e5 100%);
+  margin-bottom: 3rem;
+}
+.page-hero p { color: #ffffff !important; }
+.term-card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.term-card:hover { transform: translateY(-4px); box-shadow: 0 15px 30px rgba(0,0,0,0.08); }
+.term-icon .badge { width: 42px; height: 42px; display:flex; align-items:center; justify-content:center; font-weight:600; }
+.section-wrapper { width:95%; margin-left:auto; margin-right:auto; }
+@media (max-width: 767.98px){ .page-hero{min-height:35vh;} }
+</style>
+{% endblock %} 
