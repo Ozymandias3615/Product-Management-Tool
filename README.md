@@ -10,6 +10,8 @@ A web-based application to help product managers visually plan, track, and colla
 - CRUD APIs for roadmaps, features, and personas
 - Customer persona builder and feedback dashboard
 - Secure authentication and real-time collaboration
+- Built-in Terms & Conditions and Privacy Policy pages for transparency
+- "Coming Soon" placeholders to tease upcoming modules (Personas & Feedback)
 
 ## Tech Stack
 - Python 3.x, Flask, SQLAlchemy
@@ -67,6 +69,17 @@ flask run --host=0.0.0.0 --port=5000
 ``` 
 Visit http://localhost:5000 in your browser.
 
+Key Public Routes
+
+| URL | Purpose |
+| --- | --- |
+| `/` | Landing page |
+| `/roadmaps` | Auth-required list of your roadmaps |
+| `/terms` | Terms & Conditions |
+| `/privacy` | Privacy Policy |
+
+During beta, `/personas` and `/feedback` display polished <em>Coming Soon</em> pages.
+
 ## API Endpoints
 ### Roadmaps
 - `GET /api/roadmaps` — list all roadmaps
@@ -96,3 +109,14 @@ This project is licensed under a proprietary license. See the `LICENSE` file for
 
 ## Author
 Nanabanyin Abbiw 
+
+## Contributing
+Pull requests are welcome! If you plan a large change, please open an issue first to discuss what you would like to change.
+
+1. Fork the repo & create your branch (`git checkout -b feature/my-feature`).
+2. Commit your changes (`git commit -m 'Add some feature'`).
+3. Push to the branch (`git push origin feature/my-feature`).
+4. Open a Pull Request.
+
+## Security
+See [`SECURITY.md`](SECURITY.md) for our responsible-disclosure guidelines. Please do **not** file public issues for vulnerabilities. 
