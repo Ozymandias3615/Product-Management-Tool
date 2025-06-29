@@ -130,9 +130,34 @@ form.addEventListener('submit', async (e) => {
   }
 });
 
+// Initialize Firebase status check
+document.addEventListener('DOMContentLoaded', function() {
+  // Check Firebase configuration status
+  if (window.emailAuthOnly === true) {
+    // Firebase not configured - show info message and disable Google button
+    const googleBtn = document.getElementById('googleBtn');
+    googleBtn.disabled = true;
+    googleBtn.innerHTML = '<span class="text-muted">Google Sign-In (Setup Required)</span>';
+    googleBtn.title = 'Firebase not configured. See FIREBASE_SETUP.md for setup instructions.';
+    googleBtn.classList.add('disabled');
+    
+    // Show info message
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'alert alert-info mt-2';
+    infoDiv.innerHTML = '<small><strong>Note:</strong> Google Sign-In is currently disabled. Email/password authentication is fully functional. <a href="/FIREBASE_SETUP.md" target="_blank">Setup Guide</a></small>';
+    googleBtn.parentNode.insertBefore(infoDiv, googleBtn.nextSibling);
+  }
+});
+
 // Google Sign-In (if Firebase is available)
 googleBtn.addEventListener('click', async () => {
   clearError();
+  
+  // Check if button is disabled (Firebase not configured)
+  if (window.emailAuthOnly === true) {
+    showError('Google Sign-In requires Firebase configuration. Please use email/password login or see setup guide.');
+    return;
+  }
   
   try {
     // Check if Firebase is available and properly configured

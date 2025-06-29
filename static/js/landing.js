@@ -258,7 +258,6 @@ document.addEventListener('DOMContentLoaded', function() {
       };
       
       button.addEventListener('click', clickHandler, true);
-      button.addEventListener('mousedown', clickHandler, true);
       
       // Also add click handler to the card body to catch delegated events
       const cardBody = card.querySelector('.card-body');

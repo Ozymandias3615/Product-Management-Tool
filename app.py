@@ -225,6 +225,69 @@ class UserActivity(db.Model):
     # Relationships
     user = db.relationship('User', backref='activities')
 
+# Comment model for roadmaps and features
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    author_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    target_type = db.Column(db.String(20), nullable=False)  # 'roadmap' or 'feature'
+    target_id = db.Column(db.Integer, nullable=False)  # roadmap_id or feature_id
+    parent_id = db.Column(db.Integer, db.ForeignKey('comment.id'))  # For threaded comments
+    is_edited = db.Column(db.Boolean, default=False)
+    is_deleted = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    author = db.relationship('User', backref='comments')
+    replies = db.relationship('Comment', backref=db.backref('parent', remote_side=[id]), lazy='dynamic')
+    mentions = db.relationship('Mention', backref='comment', lazy=True, cascade='all, delete-orphan')
+
+# Mention model for @mentions in comments
+class Mention(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=False)
+    mentioned_user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    mentioned_by_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    mentioned_user = db.relationship('User', foreign_keys=[mentioned_user_id], backref='mentions_received')
+    mentioned_by = db.relationship('User', foreign_keys=[mentioned_by_id], backref='mentions_made')
+
+# Enhanced notification model
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    type = db.Column(db.String(50), nullable=False)  # mention, comment, activity, etc.
+    title = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    target_type = db.Column(db.String(20))  # roadmap, feature, comment
+    target_id = db.Column(db.Integer)
+    related_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))  # who triggered the notification
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', foreign_keys=[user_id], backref='notifications')
+    related_user = db.relationship('User', foreign_keys=[related_user_id])
+
+# Version history model for tracking changes
+class VersionHistory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    target_type = db.Column(db.String(20), nullable=False)  # 'roadmap' or 'feature'
+    target_id = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    action = db.Column(db.String(50), nullable=False)  # created, updated, deleted
+    field_name = db.Column(db.String(50))  # which field was changed
+    old_value = db.Column(db.Text)  # previous value
+    new_value = db.Column(db.Text)  # new value
+    description = db.Column(db.String(500))  # human-readable description
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='version_history')
+
 # ============ AUTHENTICATION & AUTHORIZATION ============
 
 # Get current user from session
@@ -431,6 +494,128 @@ def log_user_activity(user_id, action_type, target_type, target_id=None, target_
     except Exception as e:
         print(f"Error logging user activity: {e}")
         db.session.rollback()
+
+# ============ COLLABORATION HELPER FUNCTIONS ============
+
+def create_notification(user_id, notification_type, title, message, target_type=None, target_id=None, related_user_id=None):
+    """Create a notification for a user"""
+    try:
+        notification = Notification(
+            user_id=user_id,
+            type=notification_type,
+            title=title,
+            message=message,
+            target_type=target_type,
+            target_id=target_id,
+            related_user_id=related_user_id
+        )
+        db.session.add(notification)
+        db.session.commit()
+        return notification
+    except Exception as e:
+        print(f"Error creating notification: {e}")
+        db.session.rollback()
+        return None
+
+def process_mentions(comment_content, comment_id, author_id):
+    """Process @mentions in comment and create notifications"""
+    import re
+    
+    # Find @mentions in the comment
+    mentions = re.findall(r'@(\w+)', comment_content)
+    
+    for username in mentions:
+        # Find the mentioned user
+        mentioned_user = User.query.filter_by(username=username).first()
+        if mentioned_user and mentioned_user.id != author_id:
+            # Create mention record
+            mention = Mention(
+                comment_id=comment_id,
+                mentioned_user_id=mentioned_user.id,
+                mentioned_by_id=author_id
+            )
+            db.session.add(mention)
+            
+            # Create notification
+            author = User.query.get(author_id)
+            author_name = author.full_name or author.username or author.email
+            
+            create_notification(
+                user_id=mentioned_user.id,
+                notification_type='mention',
+                title='You were mentioned in a comment',
+                message=f'{author_name} mentioned you in a comment',
+                target_type='comment',
+                target_id=comment_id,
+                related_user_id=author_id
+            )
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        print(f"Error processing mentions: {e}")
+        db.session.rollback()
+
+def log_version_history(target_type, target_id, user_id, action, field_name=None, old_value=None, new_value=None, description=None):
+    """Log version history for changes"""
+    try:
+        version = VersionHistory(
+            target_type=target_type,
+            target_id=target_id,
+            user_id=user_id,
+            action=action,
+            field_name=field_name,
+            old_value=str(old_value) if old_value is not None else None,
+            new_value=str(new_value) if new_value is not None else None,
+            description=description
+        )
+        db.session.add(version)
+        db.session.commit()
+        return version
+    except Exception as e:
+        print(f"Error logging version history: {e}")
+        db.session.rollback()
+        return None
+
+def get_target_collaborators(target_type, target_id):
+    """Get all users who can access a roadmap or feature for notifications"""
+    collaborators = []
+    
+    if target_type == 'roadmap':
+        roadmap = Roadmap.query.get(target_id)
+        if roadmap:
+            # Add owner
+            if roadmap.owner:
+                collaborators.append(roadmap.owner.id)
+            
+            # Add members
+            members = ProjectMember.query.filter_by(roadmap_id=target_id, status='active').all()
+            for member in members:
+                if member.user_id not in collaborators:
+                    collaborators.append(member.user_id)
+    
+    elif target_type == 'feature':
+        feature = Feature.query.get(target_id)
+        if feature:
+            return get_target_collaborators('roadmap', feature.roadmap_id)
+    
+    return collaborators
+
+def notify_collaborators(target_type, target_id, notification_type, title, message, author_id):
+    """Notify all collaborators about an activity"""
+    collaborators = get_target_collaborators(target_type, target_id)
+    
+    for user_id in collaborators:
+        if user_id != author_id:  # Don't notify the author
+            create_notification(
+                user_id=user_id,
+                notification_type=notification_type,
+                title=title,
+                message=message,
+                target_type=target_type,
+                target_id=target_id,
+                related_user_id=author_id
+            )
 
 def create_template_features(roadmap_id, template, user_id):
     """Create initial features based on template selection"""
@@ -1793,6 +1978,380 @@ def join_team_page(invitation_token):
                          google_client_id=google_client_id)
 
 # API to accept team invitation
+# ============ COLLABORATION API ENDPOINTS ============
+
+# API to get comments for a roadmap or feature
+@app.route('/api/<target_type>/<int:target_id>/comments', methods=['GET'])
+def get_comments(target_type, target_id):
+    """Get comments for a roadmap or feature"""
+    if target_type not in ['roadmaps', 'features']:
+        return jsonify({'error': 'Invalid target type'}), 400
+    
+    try:
+        # Check access to the target
+        current_user = get_current_user()
+        if target_type == 'roadmaps':
+            if not check_roadmap_access(current_user.id if current_user else None, target_id, 'view'):
+                return jsonify({'error': 'Access denied'}), 403
+        elif target_type == 'features':
+            feature = Feature.query.get_or_404(target_id)
+            if not check_roadmap_access(current_user.id if current_user else None, feature.roadmap_id, 'view'):
+                return jsonify({'error': 'Access denied'}), 403
+        
+        # Get comments
+        target_type_singular = target_type[:-1]  # roadmaps -> roadmap, features -> feature
+        comments = Comment.query.filter_by(
+            target_type=target_type_singular,
+            target_id=target_id,
+            is_deleted=False
+        ).order_by(Comment.created_at.desc()).all()
+        
+        result = []
+        for comment in comments:
+            result.append({
+                'id': comment.id,
+                'content': comment.content,
+                'author': {
+                    'id': comment.author.id,
+                    'name': comment.author.full_name or comment.author.username,
+                    'avatar_url': comment.author.avatar_url
+                },
+                'is_edited': comment.is_edited,
+                'created_at': comment.created_at.isoformat(),
+                'updated_at': comment.updated_at.isoformat(),
+                'parent_id': comment.parent_id,
+                'reply_count': comment.replies.count()
+            })
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API to create a comment
+@app.route('/api/<target_type>/<int:target_id>/comments', methods=['POST'])
+@login_required
+def create_comment(target_type, target_id):
+    """Create a comment on a roadmap or feature"""
+    if target_type not in ['roadmaps', 'features']:
+        return jsonify({'error': 'Invalid target type'}), 400
+    
+    try:
+        data = request.json
+        content = data.get('content', '').strip()
+        if not content:
+            return jsonify({'error': 'Comment content is required'}), 400
+        
+        current_user = get_current_user()
+        
+        # Check access
+        if target_type == 'roadmaps':
+            if not check_roadmap_access(current_user.id, target_id, 'view'):
+                return jsonify({'error': 'Access denied'}), 403
+            target_name = Roadmap.query.get(target_id).name
+        elif target_type == 'features':
+            feature = Feature.query.get_or_404(target_id)
+            if not check_roadmap_access(current_user.id, feature.roadmap_id, 'view'):
+                return jsonify({'error': 'Access denied'}), 403
+            target_name = feature.title
+        
+        # Create comment
+        target_type_singular = target_type[:-1]
+        comment = Comment(
+            content=content,
+            author_id=current_user.id,
+            target_type=target_type_singular,
+            target_id=target_id,
+            parent_id=data.get('parent_id')
+        )
+        db.session.add(comment)
+        db.session.flush()  # Get the comment ID
+        
+        # Process mentions
+        process_mentions(content, comment.id, current_user.id)
+        
+        # Notify collaborators about new comment
+        author_name = current_user.full_name or current_user.username
+        notify_collaborators(
+            target_type=target_type_singular,
+            target_id=target_id,
+            notification_type='comment',
+            title='New comment added',
+            message=f'{author_name} commented on {target_name}',
+            author_id=current_user.id
+        )
+        
+        # Log activity
+        log_user_activity(
+            user_id=current_user.id,
+            action_type='commented',
+            target_type=target_type_singular,
+            target_id=target_id,
+            target_name=target_name,
+            description=f"Added comment to {target_type_singular} '{target_name}'"
+        )
+        
+        db.session.commit()
+        
+        return jsonify({
+            'id': comment.id,
+            'content': comment.content,
+            'author': {
+                'id': current_user.id,
+                'name': current_user.full_name or current_user.username,
+                'avatar_url': current_user.avatar_url
+            },
+            'created_at': comment.created_at.isoformat(),
+            'updated_at': comment.updated_at.isoformat(),
+            'parent_id': comment.parent_id
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# API to update a comment
+@app.route('/api/comments/<int:comment_id>', methods=['PUT'])
+@login_required
+def update_comment(comment_id):
+    """Update a comment"""
+    try:
+        data = request.json
+        content = data.get('content', '').strip()
+        if not content:
+            return jsonify({'error': 'Comment content is required'}), 400
+        
+        current_user = get_current_user()
+        comment = Comment.query.get_or_404(comment_id)
+        
+        # Only author can edit
+        if comment.author_id != current_user.id:
+            return jsonify({'error': 'Only the comment author can edit it'}), 403
+        
+        old_content = comment.content
+        comment.content = content
+        comment.is_edited = True
+        comment.updated_at = datetime.utcnow()
+        
+        # Update mentions
+        # First, remove old mentions
+        Mention.query.filter_by(comment_id=comment_id).delete()
+        # Then process new mentions
+        process_mentions(content, comment_id, current_user.id)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'id': comment.id,
+            'content': comment.content,
+            'is_edited': comment.is_edited,
+            'updated_at': comment.updated_at.isoformat()
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# API to delete a comment
+@app.route('/api/comments/<int:comment_id>', methods=['DELETE'])
+@login_required
+def delete_comment(comment_id):
+    """Delete a comment (soft delete)"""
+    try:
+        current_user = get_current_user()
+        comment = Comment.query.get_or_404(comment_id)
+        
+        # Only author can delete (you could also allow admins)
+        if comment.author_id != current_user.id:
+            return jsonify({'error': 'Only the comment author can delete it'}), 403
+        
+        comment.is_deleted = True
+        comment.content = '[Comment deleted]'
+        db.session.commit()
+        
+        return jsonify({'message': 'Comment deleted'}), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# API to get version history for a roadmap or feature
+@app.route('/api/<target_type>/<int:target_id>/history', methods=['GET'])
+def get_version_history(target_type, target_id):
+    """Get version history for a roadmap or feature"""
+    if target_type not in ['roadmaps', 'features']:
+        return jsonify({'error': 'Invalid target type'}), 400
+    
+    try:
+        current_user = get_current_user()
+        
+        # Check access
+        if target_type == 'roadmaps':
+            if not check_roadmap_access(current_user.id if current_user else None, target_id, 'view'):
+                return jsonify({'error': 'Access denied'}), 403
+        elif target_type == 'features':
+            feature = Feature.query.get_or_404(target_id)
+            if not check_roadmap_access(current_user.id if current_user else None, feature.roadmap_id, 'view'):
+                return jsonify({'error': 'Access denied'}), 403
+        
+        # Get version history
+        target_type_singular = target_type[:-1]
+        history = VersionHistory.query.filter_by(
+            target_type=target_type_singular,
+            target_id=target_id
+        ).order_by(VersionHistory.created_at.desc()).limit(50).all()
+        
+        result = []
+        for version in history:
+            result.append({
+                'id': version.id,
+                'action': version.action,
+                'field_name': version.field_name,
+                'old_value': version.old_value,
+                'new_value': version.new_value,
+                'description': version.description,
+                'user': {
+                    'id': version.user.id,
+                    'name': version.user.full_name or version.user.username
+                },
+                'created_at': version.created_at.isoformat()
+            })
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API to search for users (for mentions)
+@app.route('/api/users/search/mentions', methods=['GET'])
+@login_required
+def search_users_for_mentions():
+    """Search users for @mentions"""
+    try:
+        query = request.args.get('q', '').strip()
+        if len(query) < 2:
+            return jsonify([]), 200
+        
+        current_user = get_current_user()
+        roadmap_id = request.args.get('roadmap_id', type=int)
+        
+        # If roadmap_id is provided, only return collaborators
+        if roadmap_id:
+            if not check_roadmap_access(current_user.id, roadmap_id, 'view'):
+                return jsonify({'error': 'Access denied'}), 403
+            
+            collaborators = get_target_collaborators('roadmap', roadmap_id)
+            users = User.query.filter(
+                User.id.in_(collaborators),
+                db.or_(
+                    User.username.ilike(f'%{query}%'),
+                    User.full_name.ilike(f'%{query}%')
+                )
+            ).limit(10).all()
+        else:
+            # Search all users (you might want to restrict this)
+            users = User.query.filter(
+                db.or_(
+                    User.username.ilike(f'%{query}%'),
+                    User.full_name.ilike(f'%{query}%')
+                )
+            ).limit(10).all()
+        
+        result = []
+        for user in users:
+            result.append({
+                'id': user.id,
+                'username': user.username,
+                'full_name': user.full_name,
+                'avatar_url': user.avatar_url
+            })
+        
+        return jsonify(result), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API to get enhanced notifications
+@app.route('/api/notifications', methods=['GET'])
+@login_required
+def get_enhanced_notifications():
+    """Get enhanced notifications with more details"""
+    try:
+        current_user = get_current_user()
+        limit = request.args.get('limit', 20, type=int)
+        offset = request.args.get('offset', 0, type=int)
+        unread_only = request.args.get('unread_only', 'false').lower() == 'true'
+        
+        query = Notification.query.filter_by(user_id=current_user.id)
+        
+        if unread_only:
+            query = query.filter_by(is_read=False)
+        
+        notifications = query.order_by(Notification.created_at.desc()).offset(offset).limit(limit).all()
+        
+        result = []
+        for notification in notifications:
+            result.append({
+                'id': notification.id,
+                'type': notification.type,
+                'title': notification.title,
+                'message': notification.message,
+                'target_type': notification.target_type,
+                'target_id': notification.target_id,
+                'related_user': {
+                    'id': notification.related_user.id,
+                    'name': notification.related_user.full_name or notification.related_user.username,
+                    'avatar_url': notification.related_user.avatar_url
+                } if notification.related_user else None,
+                'is_read': notification.is_read,
+                'created_at': notification.created_at.isoformat()
+            })
+        
+        # Count unread notifications
+        unread_count = Notification.query.filter_by(user_id=current_user.id, is_read=False).count()
+        
+        return jsonify({
+            'notifications': result,
+            'unread_count': unread_count,
+            'total_count': Notification.query.filter_by(user_id=current_user.id).count()
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# API to mark notifications as read
+@app.route('/api/notifications/mark-read', methods=['POST'])
+@login_required
+def mark_notifications_read():
+    """Mark notifications as read"""
+    try:
+        current_user = get_current_user()
+        data = request.json
+        notification_ids = data.get('notification_ids', [])
+        
+        if notification_ids:
+            # Mark specific notifications as read
+            Notification.query.filter(
+                Notification.id.in_(notification_ids),
+                Notification.user_id == current_user.id
+            ).update({'is_read': True})
+        else:
+            # Mark all notifications as read
+            Notification.query.filter_by(user_id=current_user.id).update({'is_read': True})
+        
+        db.session.commit()
+        
+        unread_count = Notification.query.filter_by(user_id=current_user.id, is_read=False).count()
+        
+        return jsonify({
+            'message': 'Notifications marked as read',
+            'unread_count': unread_count
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/join/<invitation_token>', methods=['POST'])
 @limiter.limit("5 per minute")  # Prevent invitation abuse
 def accept_team_invitation(invitation_token):
@@ -2302,6 +2861,50 @@ def team():
 def contact():
     return render_template('contact.html')
 
+@app.route('/FIREBASE_SETUP.md')
+def firebase_setup_guide():
+    """Serve the Firebase setup guide as a web page"""
+    try:
+        with open('FIREBASE_SETUP.md', 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Convert markdown to HTML for better display
+        content = content.replace('# ', '<h1>').replace('\n## ', '</h1>\n<h2>').replace('\n### ', '</h2>\n<h3>')
+        content = content.replace('\n**', '<br><strong>').replace('**', '</strong>')
+        content = content.replace('\n- ', '<br>• ').replace('\n1. ', '<br>1. ')
+        content = content.replace('```bash\n', '<pre><code class="language-bash">').replace('\n```', '</code></pre>')
+        content = content.replace('```javascript\n', '<pre><code class="language-javascript">').replace('\n```', '</code></pre>')
+        content = content.replace('✅', '<span class="text-success">✅</span>')
+        content = content.replace('❌', '<span class="text-danger">❌</span>')
+        
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Firebase Setup Guide - Product Roadmap Planner</title>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            <style>
+                pre {{ background: #f8f9fa; padding: 15px; border-radius: 5px; }}
+                code {{ color: #d63384; }}
+                .language-bash {{ color: #198754; }}
+                .language-javascript {{ color: #0d6efd; }}
+            </style>
+        </head>
+        <body>
+            <div class="container my-4">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto">
+                        <a href="/roadmaps" class="btn btn-outline-primary mb-3">← Back to Roadmaps</a>
+                        {content}
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+    except FileNotFoundError:
+        return "<h1>Firebase Setup Guide Not Found</h1><p>Please check the FIREBASE_SETUP.md file exists.</p>", 404
+
 # Contact form submission
 @app.route('/api/contact', methods=['POST'])
 @limiter.limit("2 per minute")  # Prevent contact form spam
@@ -2452,7 +3055,12 @@ def submit_contact_form():
 
 @app.route('/personas')
 def personas_view():
-    return render_template('personas.html')
+    return render_template('coming_soon.html', feature_name='Personas')
+
+# Feedback placeholder page
+@app.route('/feedback')
+def feedback_page():
+    return render_template('coming_soon.html', feature_name='Feedback')
 
 # ============ PUBLIC SHARING ROUTES ============
 
@@ -2589,10 +3197,12 @@ def firebase_config_js():
             value = config[key]
             print(f"  {key.upper()}: {'✓' if value else '✗'}")
         
-        # Return a disabled Firebase config
-        js = """// Firebase configuration not available
-console.warn('Firebase not configured - authentication features disabled');
+        # Return a disabled Firebase config but allow email/password authentication
+        js = """// Firebase configuration not available - Google Sign-In disabled
+console.warn('Firebase not configured - Google Sign-In disabled. Email/password authentication still available.');
+console.info('To enable Google Sign-In, follow the setup guide at: FIREBASE_SETUP.md');
 window.firebaseConfigured = false;
+window.emailAuthOnly = true;  // Enable email/password only mode
 """
         return Response(js, mimetype='application/javascript')
     

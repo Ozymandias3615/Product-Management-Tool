@@ -2922,8 +2922,106 @@ class RoadmapManager {
         document.getElementById('detailRelease').textContent = feature.release || 'Not assigned';
         document.getElementById('detailDate').textContent = this.formatDateForDisplay(feature.date);
         
+        // Initialize collaboration features for this feature
+        this.initializeFeatureCollaboration(feature);
+        
         const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('featureDetailModal'));
         modal.show();
+    }
+
+    initializeFeatureCollaboration(feature) {
+        // Set the feature ID in the comments section
+        const commentsSection = document.querySelector('[data-comments-target="features"]');
+        if (commentsSection) {
+            commentsSection.setAttribute('data-comments-id', feature.id);
+            
+            // Initialize comments if collaboration manager is available
+            if (window.collaborationManager) {
+                window.collaborationManager.createCommentsComponent(
+                    commentsSection, 
+                    'features', 
+                    feature.id
+                );
+            }
+        }
+        
+        // Setup history tab click handler
+        const historyTab = document.getElementById('history-tab');
+        if (historyTab) {
+            // Remove previous event listeners
+            historyTab.replaceWith(historyTab.cloneNode(true));
+            const newHistoryTab = document.getElementById('history-tab');
+            
+            newHistoryTab.addEventListener('click', () => {
+                this.loadFeatureHistory(feature.id);
+            });
+        }
+    }
+
+    async loadFeatureHistory(featureId) {
+        const historyContainer = document.getElementById('feature-history');
+        if (!historyContainer) return;
+        
+        try {
+            historyContainer.innerHTML = '<div class="text-center text-muted p-3"><span class="spinner-border spinner-border-sm me-2"></span>Loading history...</div>';
+            
+            const response = await fetch(`/api/features/${featureId}/history`);
+            if (response.ok) {
+                const history = await response.json();
+                this.renderFeatureHistory(history);
+            } else {
+                throw new Error('Failed to load history');
+            }
+        } catch (error) {
+            console.error('Error loading feature history:', error);
+            historyContainer.innerHTML = '<div class="text-danger text-center p-3">Failed to load history</div>';
+        }
+    }
+
+    renderFeatureHistory(history) {
+        const historyContainer = document.getElementById('feature-history');
+        if (!historyContainer) return;
+        
+        if (history.length === 0) {
+            historyContainer.innerHTML = '<div class="text-muted text-center p-3">No changes recorded yet</div>';
+            return;
+        }
+        
+        const historyHTML = history.map(item => `
+            <div class="history-item border-bottom pb-2 mb-2">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <span class="badge bg-primary me-2">${item.action}</span>
+                            <strong class="small">${item.user.name}</strong>
+                        </div>
+                        ${item.description ? `<p class="mb-1 small">${item.description}</p>` : ''}
+                        ${item.field_name ? `
+                            <div class="small text-muted">
+                                <strong>${item.field_name}:</strong> 
+                                ${item.old_value ? `"${item.old_value}" → ` : ''}"${item.new_value}"
+                            </div>
+                        ` : ''}
+                    </div>
+                    <small class="text-muted">${this.formatTimeAgo(item.created_at)}</small>
+                </div>
+            </div>
+        `).join('');
+        
+        historyContainer.innerHTML = historyHTML;
+    }
+
+    formatTimeAgo(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now - date;
+        
+        if (diff < 60000) return 'just now';
+        if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+        if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+        if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
+        
+        return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
     
     truncateText(text, maxLength) {

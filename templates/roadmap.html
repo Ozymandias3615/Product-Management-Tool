@@ -99,8 +99,10 @@
                         <i class="bi bi-diagram-3"></i>
                         <span>Gantt</span>
                     </button>
-        </div>
-    </div>
+                </div>
+                
+                <!-- Roadmap Details Filters -->
+            </div>
 
             <!-- Right Content Area -->
             <div class="content-area flex-grow-1">
@@ -196,63 +198,93 @@
 
 <!-- Feature Detail Modal -->
 <div class="modal fade" id="featureDetailModal" tabindex="-1" aria-labelledby="featureDetailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content clean-modal">
+    <div class="modal-dialog modal-xl modal-dialog-centered" style="max-width: 90vw;">
+        <div class="modal-content clean-modal d-flex flex-column" style="height: 85vh;">
             <div class="modal-header clean-modal-header">
                 <h5 class="modal-title" id="featureDetailModalLabel">
                     <i class="bi bi-info-circle me-2"></i>Feature Details
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body clean-modal-body">
-                <div class="feature-detail-content">
-                    <div class="feature-title-section">
-                        <h4 id="detailTitle" class="feature-detail-title"></h4>
-                        <p id="detailDescription" class="feature-detail-description"></p>
-                    </div>
-                    
-                    <div class="feature-meta-section">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="detail-item">
-                                    <label class="detail-label">
-                                        <i class="bi bi-flag me-2"></i>Priority
-                                    </label>
-                                    <span id="detailPriority" class="detail-value priority-badge"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="detail-item">
-                                    <label class="detail-label">
-                                        <i class="bi bi-speedometer me-2"></i>Status
-                                    </label>
-                                    <span id="detailStatus" class="detail-value status-badge"></span>
-                                </div>
-                            </div>
+            <div class="d-flex flex-grow-1 overflow-hidden">
+                <div class="modal-body clean-modal-body overflow-auto flex-grow-1">
+                    <div class="feature-detail-content">
+                        <div class="feature-title-section">
+                            <h4 id="detailTitle" class="feature-detail-title"></h4>
+                            <p id="detailDescription" class="feature-detail-description"></p>
                         </div>
                         
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="detail-item">
-                                    <label class="detail-label">
-                                        <i class="bi bi-box-seam me-2"></i>Release
-                                    </label>
-                                    <span id="detailRelease" class="detail-value"></span>
+                        <div class="feature-meta-section">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="detail-item">
+                                        <label class="detail-label">
+                                            <i class="bi bi-flag me-2"></i>Priority
+                                        </label>
+                                        <span id="detailPriority" class="detail-value priority-badge"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-item">
+                                        <label class="detail-label">
+                                            <i class="bi bi-speedometer me-2"></i>Status
+                                        </label>
+                                        <span id="detailStatus" class="detail-value status-badge"></span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="detail-item">
-                                    <label class="detail-label">
-                                        <i class="bi bi-calendar-event me-2"></i>Target Date
-                                    </label>
-                                    <span id="detailDate" class="detail-value"></span>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="detail-item">
+                                        <label class="detail-label">
+                                            <i class="bi bi-box-seam me-2"></i>Release
+                                        </label>
+                                        <span id="detailRelease" class="detail-value"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="detail-item">
+                                        <label class="detail-label">
+                                            <i class="bi bi-calendar-event me-2"></i>Target Date
+                                        </label>
+                                        <span id="detailDate" class="detail-value"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="modal-comments-sidebar border-start bg-light p-4 overflow-auto" style="width: 350px;">
+                    <ul class="nav nav-tabs mb-3" id="collaborationTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments-pane" type="button" role="tab">
+                                <i class="bi bi-chat-dots me-2"></i>Comments
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history-pane" type="button" role="tab">
+                                <i class="bi bi-clock-history me-2"></i>History
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="collaborationTabContent">
+                        <div class="tab-pane fade show active" id="comments-pane" role="tabpanel">
+                            <div data-comments-target="features" data-comments-id="" data-roadmap-id="{{ roadmap_id }}">
+                                <!-- Collaboration manager will populate this -->
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="history-pane" role="tabpanel">
+                            <div id="feature-history">
+                                <div class="text-center text-muted p-3">Loading change history...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="modal-footer clean-modal-footer">
+            
+            <div class="modal-footer clean-modal-footer flex-shrink-0">
                 <button type="button" class="btn btn-outline-danger" id="deleteFeatureBtn">
                     <i class="bi bi-trash me-2"></i>Delete
                 </button>
@@ -665,5 +697,6 @@
 <link rel="stylesheet" href="https://unpkg.com/frappe-gantt/dist/frappe-gantt.css">
 <script src="https://cdn.jsdelivr.net/npm/frappe-gantt/dist/frappe-gantt.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="{{ url_for('static', filename='js/collaboration.js') }}"></script>
 <script src="{{ url_for('static', filename='js/roadmap.js') }}"></script>
 {% endblock %} 
